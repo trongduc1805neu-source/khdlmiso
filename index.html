@@ -13,6 +13,20 @@
     <!-- TODO: Thay thế các URL dưới đây bằng tên miền thật của bạn sau khi deploy -->
     <meta property="og:url" content="https://10diemcnxh.vercel.app/" />
     <meta property="og:image" content="https://10diemcnxh.vercel.app/anh-bia-share.png" />
+    <!-- Fix for environments where fetch cannot be reassigned (like preview iframes) -->
+    <script>
+      const originalFetch = window.fetch;
+      try {
+        Object.defineProperty(window, 'fetch', {
+          configurable: true,
+          enumerable: true,
+          get: () => originalFetch,
+          set: (v) => { console.warn('Attempted to reassign window.fetch, ignoring.'); }
+        });
+      } catch (e) {
+        console.warn('Could not define fetch setter:', e);
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

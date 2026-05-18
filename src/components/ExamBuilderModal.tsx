@@ -14,6 +14,7 @@ export default function ExamBuilderModal({ chapters, onStartExam, onClose }: Pro
   const totalAvailable = chapters.reduce((sum, c) => sum + (c.questions?.length || 0), 0);
   
   const [structure, setStructure] = useState<Record<number, number>>({});
+  const [timeLimitOption, setTimeLimitOption] = useState<number>(0); // 0 = no limit, otherwise minutes
 
   useEffect(() => {
     const defaultStruct: Record<number, number> = {};
@@ -63,6 +64,7 @@ export default function ExamBuilderModal({ chapters, onStartExam, onClose }: Pro
     const examChapter: Chapter = {
       chapter: 999, // Special ID for exam
       chapter_title: `Đề thi ngẫu nhiên (${examQuestions.length} câu)`,
+      timeLimit: timeLimitOption > 0 ? timeLimitOption * 60 : undefined,
       questions: examQuestions
     };
 
@@ -157,6 +159,24 @@ export default function ExamBuilderModal({ chapters, onStartExam, onClose }: Pro
             <span className="text-2xl font-sans text-ink font-bold">Tổng số lượng:</span>
             <span className="text-3xl font-display font-bold text-primary mr-2">{totalSelected}</span>
           </div>
+
+          <div className="flex items-center justify-between mb-5 px-1 bg-surface-soft p-3 wobbly-border border-2 border-ink shadow-[2px_2px_0px_#2d2d2d] rotate-1">
+            <span className="text-xl font-sans text-ink font-bold">Thời gian:</span>
+            <select 
+              value={timeLimitOption}
+              onChange={(e) => setTimeLimitOption(Number(e.target.value))}
+              className="text-xl font-sans font-bold text-ink bg-transparent border-none outline-none cursor-pointer text-right"
+            >
+              <option value={0}>Không giới hạn</option>
+              <option value={15}>15 phút</option>
+              <option value={30}>30 phút</option>
+              <option value={45}>45 phút</option>
+              <option value={60}>60 phút</option>
+              <option value={90}>90 phút</option>
+              <option value={120}>120 phút</option>
+            </select>
+          </div>
+
           <button
             onClick={handleStart}
             disabled={totalSelected === 0}

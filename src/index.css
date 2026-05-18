@@ -1,85 +1,79 @@
-@import url('https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Patrick+Hand&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;700;900&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --color-canvas: #fdfbf7;
+  --color-canvas: #F0F0F0;
   --color-surface: #ffffff;
-  --color-surface-soft: #fff9c4;
-  --color-hairline: #2d2d2d;
-  --color-hairline-soft: #e5e0d8;
-  --color-hairline-strong: #2d2d2d;
-  
-  --color-ink: #2d2d2d;
-  --color-ink-deep: #000000;
-  --color-charcoal: #2d2d2d;
-  --color-slate: #5e5e5e;
-  --color-steel: #868686;
-  --color-stone: #e5e0d8;
-  
-  --color-primary: #ff4d4d;
-  --color-primary-pressed: #e60000;
-  --color-brand-navy: #2d5da1;
+  --color-ink: #121212;
+  --color-slate: #121212;
+  --color-primary: #D02020;
+  --color-primary-blue: #1040C0;
+  --color-primary-yellow: #F0C020;
+  --color-charcoal: #121212;
   
   --color-semantic-success: #0C9E59;
-  --color-semantic-error: #ff4d4d;
+  --color-semantic-error: #D02020;
 
-  --font-sans: "Patrick Hand", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --font-display: "Kalam", "Patrick Hand", cursive;
-  
-  --radius-wobbly: 255px 15px 225px 15px / 15px 225px 15px 255px;
-  --radius-wobbly-md: 25px 225px 25px 225px / 225px 25px 225px 25px;
-  --radius-wobbly-sm: 15px 225px 15px 255px / 255px 15px 225px 15px;
+  --font-sans: "Outfit", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-display: "Outfit", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 
-  --shadow-hard: 4px 4px 0px 0px #2d2d2d;
-  --shadow-hard-lg: 8px 8px 0px 0px #2d2d2d;
-  --shadow-hard-hover: 2px 2px 0px 0px #2d2d2d;
+  --shadow-hard: 4px 4px 0px 0px #121212;
+  --shadow-hard-lg: 8px 8px 0px 0px #121212;
+  --shadow-hard-hover: 2px 2px 0px 0px #121212;
 }
 
 body {
   @apply bg-canvas text-ink font-sans antialiased;
-  background-image: radial-gradient(#e5e0d8 1px, transparent 1px);
-  background-size: 24px 24px;
+  background-image: radial-gradient(#fff 2px, transparent 2px);
+  background-size: 20px 20px;
 }
 
-@utility wobbly-border {
-  border-radius: var(--radius-wobbly);
-}
-
-@utility wobbly-border-md {
-  border-radius: var(--radius-wobbly-md);
-}
-
-@utility wobbly-border-sm {
-  border-radius: var(--radius-wobbly-sm);
-}
-
-@utility btn-hand-drawn {
-  @apply bg-surface border-[3px] border-ink text-ink font-sans shadow-hard transition-all duration-100 rounded-[var(--radius-wobbly)];
+@utility btn-primary {
+  @apply bg-primary text-white border-[2px] sm:border-[4px] border-ink shadow-[4px_4px_0px_0px_#121212] uppercase font-bold tracking-wider rounded-none transition-all duration-200 outline-none;
   &:hover {
-    @apply bg-primary text-white shadow-hard-hover translate-x-[2px] translate-y-[2px];
+    @apply bg-primary/90 -translate-y-1;
   }
   &:active {
-    @apply shadow-none translate-x-[4px] translate-y-[4px];
+    @apply translate-x-[2px] translate-y-[2px] shadow-none;
+  }
+  &:focus-visible {
+    @apply ring-2 ring-primary ring-offset-2;
   }
 }
 
-@utility btn-hand-drawn-secondary {
-  @apply bg-stone border-[3px] border-ink text-ink font-sans shadow-hard transition-all duration-100 rounded-[var(--radius-wobbly)];
+@utility btn-secondary {
+  @apply bg-primary-blue text-white border-[2px] sm:border-[4px] border-ink shadow-[4px_4px_0px_0px_#121212] uppercase font-bold tracking-wider rounded-none transition-all duration-200 outline-none;
   &:hover {
-    @apply bg-brand-navy text-white shadow-hard-hover translate-x-[2px] translate-y-[2px];
+    @apply bg-primary-blue/90 -translate-y-1;
   }
   &:active {
-    @apply shadow-none translate-x-[4px] translate-y-[4px];
+    @apply translate-x-[2px] translate-y-[2px] shadow-none;
+  }
+  &:focus-visible {
+    @apply ring-2 ring-primary-blue ring-offset-2;
   }
 }
 
-@utility card-hand-drawn {
-  @apply bg-surface border-2 border-ink rounded-[var(--radius-wobbly-md)];
-  box-shadow: 3px 3px 0px 0px rgba(45, 45, 45, 0.1);
+@utility btn-ghost {
+  @apply bg-transparent text-ink border-[2px] sm:border-[4px] border-ink shadow-[4px_4px_0px_0px_#121212] uppercase font-bold tracking-wider rounded-none transition-all duration-200 outline-none;
+  &:hover {
+    @apply bg-white -translate-y-1;
+  }
+  &:active {
+    @apply translate-x-[2px] translate-y-[2px] shadow-none;
+  }
 }
 
-@utility heading-hand-drawn {
-  @apply font-display font-bold;
+@utility card-bauhaus {
+  @apply bg-surface border-[2px] sm:border-[4px] border-ink rounded-none relative transition-transform duration-200;
+  box-shadow: 8px 8px 0px 0px #121212;
+  &:hover {
+    @apply -translate-y-1;
+  }
+}
+
+@utility heading-bauhaus {
+  @apply font-black uppercase tracking-tighter;
 }
 
 @utility scrollbar-hide {

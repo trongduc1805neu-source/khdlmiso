@@ -21,6 +21,7 @@ export interface Question {
 export interface Chapter {
   chapter: number;
   chapter_title?: string;
+  timeLimit?: number; // Time limit in seconds
   knowledge_map?: {
     topics: string[];
   };
