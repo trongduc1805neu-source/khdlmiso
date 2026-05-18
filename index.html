@@ -13,16 +13,14 @@
     <!-- TODO: Thay thế các URL dưới đây bằng tên miền thật của bạn sau khi deploy -->
     <meta property="og:url" content="https://10diemcnxh.vercel.app/" />
     <meta property="og:image" content="https://10diemcnxh.vercel.app/anh-bia-share.png" />
+    <script>window.addEventListener('error', function(e) { if (e.message.indexOf('fetch') !== -1 && e.message.indexOf('getter') !== -1) { console.warn('Prevented fetch setter error'); e.preventDefault(); e.stopPropagation(); } });</script>
     <!-- Fix for environments where fetch cannot be reassigned (like preview iframes) -->
     <script>
       const originalFetch = window.fetch;
       try {
-        Object.defineProperty(window, 'fetch', {
-          configurable: true,
-          enumerable: true,
-          get: () => originalFetch,
-          set: (v) => { console.warn('Attempted to reassign window.fetch, ignoring.'); }
-        });
+        const def = { configurable: true, enumerable: true, get: () => originalFetch, set: (v) => { console.warn('Attempted to reassign fetch, ignoring.'); } };
+        Object.defineProperty(window, 'fetch', def);
+        if (typeof Window !== 'undefined') Object.defineProperty(Window.prototype, 'fetch', def);
       } catch (e) {
         console.warn('Could not define fetch setter:', e);
       }

@@ -61,14 +61,18 @@ export default function App() {
     <div className="h-screen w-full flex flex-col overflow-hidden max-w-[1440px] mx-auto md:max-w-none relative z-0">
       <header className="h-[80px] md:h-20 bg-[#F0C020] border-b-4 border-ink flex items-center px-4 md:px-8 shrink-0 pt-[env(safe-area-inset-top,16px)] pb-2 relative z-20 shadow-[0px_4px_0px_0px_#121212]">
         <div className="flex items-center gap-4">
-          {/* Geometric Logo */}
-          <div className="flex gap-1 items-center">
-            <div className="w-6 h-6 rounded-full bg-primary border-2 border-ink"></div>
-            <div className="w-6 h-6 rounded-none bg-primary-blue border-2 border-ink"></div>
-            <div className="w-0 h-0 border-l-[12px] border-l-transparent border-r-[12px] border-r-transparent border-b-[24px] border-b-white border-2 border-ink"></div>
+          {/* Logo */}
+          <div className="flex items-center">
+            <img src="/logo.svg" alt="Logo" className="h-10 md:h-12 w-auto mt-2 scale-125" />
           </div>
           <span className="heading-bauhaus text-xl md:text-2xl tracking-tighter text-ink mt-1">
-            {selectedChapter ? (selectedChapter.chapter === 999 ? 'ĐỀ THI NGẪU NHIÊN' : selectedChapter.chapter === 998 ? 'ÔN LẠI CÂU SAI' : `CHƯƠNG ${selectedChapter.chapter}`) : 'TRẮC NGHIỆM DATA'}
+            {selectedChapter ? (
+              selectedChapter.chapter === 999 ? 'ĐỀ THI NGẪU NHIÊN' : 
+              selectedChapter.chapter === 998 ? 'ÔN LẠI CÂU SAI' : 
+              <>
+                <span className="truncate">{selectedChapter.chapter_title ? selectedChapter.chapter_title.replace(/^CHƯƠNG\s*\d+[\s:\-.]*/i, '') : ''}</span>
+              </>
+            ) : 'KHOA HỌC DỮ LIỆU'}
           </span>
         </div>
       </header>
@@ -76,9 +80,7 @@ export default function App() {
       <div className="flex-1 flex overflow-hidden">
         {/* Desktop Sidebar */}
         <aside className="w-80 lg:w-96 border-r-4 border-ink p-6 lg:p-8 flex flex-col shrink-0 hidden md:flex overflow-hidden relative z-10 bg-white">
-          <h2 className="heading-bauhaus text-lg lg:text-xl text-ink mb-6 shrink-0 border-b-4 border-ink pb-2">DANH SÁCH CHƯƠNG</h2>
-          
-          <div className="flex flex-col gap-4 mb-8 shrink-0 mt-2">
+          <div className="flex flex-col gap-4 mb-8 shrink-0">
             <button 
               onClick={() => setIsExamModalOpen(true)}
               className="btn-primary w-full py-4 px-4 flex items-center justify-center gap-2"
@@ -141,11 +143,7 @@ export default function App() {
                     </button>
                   </div>
                   
-                  <h2 className="heading-bauhaus text-xl mb-6 text-ink border-b-4 border-ink pb-2">
-                    CHỌN CHƯƠNG
-                  </h2>
-
-                  <div className="mb-10">
+                  <div className="mb-10 space-y-4">
                     <ChapterList 
                       chapters={chapters} 
                       onSelectChapter={setSelectedChapter} 

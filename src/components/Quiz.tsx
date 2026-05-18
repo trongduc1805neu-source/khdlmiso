@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { Chapter, Question } from '../types';
-import { ArrowLeft, CheckCircle2, XCircle, RotateCcw, Presentation, HelpCircle, Check, X, Clock, Target, Volume2, VolumeX } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, XCircle, RotateCcw, Presentation, HelpCircle, Check, X, Clock, Target, Volume2, VolumeX, Flame } from 'lucide-react';
 import PdfViewerModal from './PdfViewerModal';
 
 interface Props {
@@ -30,6 +31,79 @@ const removeWrongQuestion = (q: Question) => {
   } catch (e) {
     console.error(e);
   }
+};
+
+const renderTextWithCode = (text: string) => {
+  if (!text) return text;
+  
+  // Split by either triple backtick blocks (multiline) or single backtick (inline)
+  const parts = text.split(/(```[\s\S]*?```|`[^`]+`)/g);
+  
+  return parts.map((part, i) => {
+    if (part.startsWith('```') && part.endsWith('```')) {
+      // Extract the content, removing the backticks and the optional language identifier
+      const match = part.match(/^```([a-zA-Z]*)\n?([\s\S]*?)\n?```$/);
+      const codeContent = match ? match[2] : part.slice(3, -3);
+      
+      return (
+        <pre key={i} className="bg-[#E5E7EB] p-4 sm:p-5 font-mono text-sm sm:text-base text-primary-blue my-4 border-4 border-ink font-bold whitespace-pre-wrap break-words overflow-x-auto shadow-[4px_4px_0px_0px_#121212]">
+          <code>{codeContent}</code>
+        </pre>
+      );
+    } else if (part.startsWith('`') && part.endsWith('`')) {
+      return (
+        <code key={i} className="bg-[#E5E7EB] px-1.5 py-0.5 font-mono text-[0.9em] text-primary-blue mx-0.5 border-2 border-ink font-bold whitespace-pre-wrap break-words">
+          {part.slice(1, -1)}
+        </code>
+      );
+    }
+    
+    // Process markdown newlines for standard text
+    if (part.includes('\n')) {
+      return (
+        <span key={i}>
+          {part.split('\n').map((line, j, arr) => (
+            <React.Fragment key={j}>
+              {line}
+              {j < arr.length - 1 && <br />}
+            </React.Fragment>
+          ))}
+        </span>
+      );
+    }
+    
+    return <span key={i}>{part}</span>;
+  });
+};
+
+const shuffleQuestionOptions = (question: Question): Question => {
+  if (!question.options || Object.keys(question.options).length === 0) return question;
+  
+  const entries = Object.entries(question.options);
+  const originalKeys = entries.map(e => e[0]).sort();
+  const shuffledEntries = [...entries].sort(() => Math.random() - 0.5);
+  
+  const newOptions: Record<string, string> = {};
+  let newCorrectAnswer = question.correct_answer;
+  const oldCorrectAnswer = question.correct_answer?.trim().toUpperCase();
+  
+  shuffledEntries.forEach((entry, index) => {
+    const originalKey = entry[0];
+    const originalText = entry[1];
+    const newKey = originalKeys[index];
+    
+    newOptions[newKey] = originalText;
+    
+    if (originalKey.toUpperCase() === oldCorrectAnswer) {
+      newCorrectAnswer = newKey;
+    }
+  });
+  
+  return {
+    ...question,
+    options: newOptions,
+    correct_answer: newCorrectAnswer
+  };
 };
 
 export default function Quiz({ chapter, onBack }: Props) {
@@ -69,11 +143,42 @@ export default function Quiz({ chapter, onBack }: Props) {
 
   useEffect(() => {
     setShowOtherWays(false);
+    if (containerRef.current && containerRef.current.parentElement) {
+      containerRef.current.parentElement.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   }, [currentQuestion]);
 
   // Audio State
   const [isMuted, setIsMuted] = useState(false);
+  const [volume, setVolume] = useState(0.25);
   const audioRef = React.useRef<HTMLAudioElement>(null);
+  const correctAudioRef = React.useRef<HTMLAudioElement>(null);
+  const correct2AudioRef = React.useRef<HTMLAudioElement>(null);
+  const wrongAudioRef = React.useRef<HTMLAudioElement>(null);
+  const endAudioRef = React.useRef<HTMLAudioElement>(null);
+  
+  const streak3AudioRef = React.useRef<HTMLAudioElement>(null);
+  const streak5AudioRef = React.useRef<HTMLAudioElement>(null);
+
+  const feedbackRef = React.useRef<HTMLDivElement>(null);
+  const containerRef = React.useRef<HTMLDivElement>(null);
+
+  // Scroll to explanation when answered
+  useEffect(() => {
+    if (selectedOption && feedbackRef.current && !isExamMode) {
+      setTimeout(() => {
+        feedbackRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      }, 100);
+    }
+  }, [selectedOption, isExamMode]);
+
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = volume;
+    }
+  }, [volume]);
 
   // Counters for progress
   const [masteredCount, setMasteredCount] = useState(0);
@@ -86,10 +191,22 @@ export default function Quiz({ chapter, onBack }: Props) {
   const [startTime, setStartTime] = useState<number>(Date.now());
   const [timeSpent, setTimeSpent] = useState<number>(0);
 
+  // Question Timer State
+  const [questionTimeSpent, setQuestionTimeSpent] = useState<Record<number, number>>({});
+  const [currentQuestionStartTime, setCurrentQuestionStartTime] = useState<number>(Date.now());
+  const [currentQuestionTimer, setCurrentQuestionTimer] = useState<number>(0);
+
+  // Streak State
+  const [streak, setStreak] = useState(0);
+  const [maxStreak, setMaxStreak] = useState(0);
+  const [streakBroken, setStreakBroken] = useState(false);
+  const [showStreakPopup, setShowStreakPopup] = useState(false);
+  const [streakPopupText, setStreakPopupText] = useState("");
+
   // Initialize the queue when the chapter changes
   useEffect(() => {
     if (chapter.questions && chapter.questions.length > 0) {
-      const initialQueue = [...chapter.questions];
+      const initialQueue = chapter.questions.map(shuffleQuestionOptions);
       setQueue(initialQueue);
       setCurrentQuestion(initialQueue[0]);
     } else {
@@ -106,6 +223,9 @@ export default function Quiz({ chapter, onBack }: Props) {
     setTimeLeft(chapter.timeLimit || null);
     setStartTime(Date.now());
     setTimeSpent(0);
+    setQuestionTimeSpent({});
+    setCurrentQuestionStartTime(Date.now());
+    setCurrentQuestionTimer(0);
   }, [chapter]);
 
   // Timer Effect
@@ -116,6 +236,12 @@ export default function Quiz({ chapter, onBack }: Props) {
         return () => clearInterval(timer);
       } else if (timeLeft === 0 && currentQuestion) {
         // Time's up! End exam early.
+        if (endAudioRef.current) {
+          endAudioRef.current.volume = volume;
+          endAudioRef.current.currentTime = 0;
+          endAudioRef.current.play().catch(e => console.error("Audio play error", e));
+        }
+        
         setExamWrongQuestions(prev => {
           const newWrongs = [...prev];
           queue.forEach(q => {
@@ -129,7 +255,22 @@ export default function Quiz({ chapter, onBack }: Props) {
         setCurrentQuestion(null);
       }
     }
-  }, [isExamMode, timeLeft, queue.length, currentQuestion]);
+  }, [isExamMode, timeLeft, queue.length, currentQuestion, isMuted, volume]);
+
+  // Current Question Timer Effect
+  useEffect(() => {
+    setCurrentQuestionStartTime(Date.now());
+    setCurrentQuestionTimer(0);
+  }, [currentQuestion?.id]);
+
+  useEffect(() => {
+    if (currentQuestion && !selectedOption) {
+      const timer = setInterval(() => {
+        setCurrentQuestionTimer(Math.floor((Date.now() - currentQuestionStartTime) / 1000));
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [currentQuestion, selectedOption, currentQuestionStartTime]);
 
   // Calculate Time Spent when finished
   useEffect(() => {
@@ -150,12 +291,14 @@ export default function Quiz({ chapter, onBack }: Props) {
       } else {
         if (!isExamMode && currentQuestion) {
           // Lặp lại ngắt quãng: Add it multiple times to reinforce learning if wrong
+          const shuffledAgain = shuffleQuestionOptions(currentQuestion);
           const insertIndex1 = Math.min(2, newQueue.length);
-          newQueue.splice(insertIndex1, 0, currentQuestion);
+          newQueue.splice(insertIndex1, 0, shuffledAgain);
           
           if (newQueue.length > 3) {
             const insertIndex2 = Math.min(6, newQueue.length);
-            newQueue.splice(insertIndex2, 0, currentQuestion);
+            const shuffledAgain2 = shuffleQuestionOptions(currentQuestion);
+            newQueue.splice(insertIndex2, 0, shuffledAgain2);
           }
         }
       }
@@ -183,32 +326,79 @@ export default function Quiz({ chapter, onBack }: Props) {
     const correctKey = currentQuestion.correct_answer?.trim().toUpperCase() || "";
     const isAnswerCorrect = key.toUpperCase() === correctKey;
     
+    const timeSpentOnThis = Math.floor((Date.now() - currentQuestionStartTime) / 1000);
+    setQuestionTimeSpent(prev => ({
+      ...prev,
+      [currentQuestion.id]: (prev[currentQuestion.id] || 0) + timeSpentOnThis
+    }));
+
     setIsCorrect(isAnswerCorrect);
 
-    if (isExamMode) {
-      setExamAnswers(prev => ({ ...prev, [currentQuestion.id]: key }));
-      if (!isAnswerCorrect) {
-        setExamWrongQuestions(prev => {
-          if (!prev.find(q => q.id === currentQuestion.id)) {
-            return [...prev, currentQuestion];
-          }
-          return prev;
-        });
+    if (isAnswerCorrect) {
+      const newStreak = streak + 1;
+      setStreak(newStreak);
+      setMaxStreak(prev => Math.max(prev, newStreak));
+      setStreakBroken(false);
+      
+      if (newStreak >= 3 && !isExamMode) {
+        setShowStreakPopup(true);
+        const messages = ["Đang vào guồng! 🔥", "Không thể cản bước! 🚀", "Tuyệt vời! ⭐", "Quá đỉnh! 🌟", "Cháy quá! 💥"];
+        setStreakPopupText(messages[(newStreak - 3) % messages.length]);
+        setTimeout(() => setShowStreakPopup(false), 2000);
       }
       
-      // Auto advance quickly in exam mode
-      setTimeout(() => {
-        handleNext(isAnswerCorrect);
-      }, 400);
-      return;
-    }
-
-    if (isAnswerCorrect) {
+      {
+        let audioEl = timeSpentOnThis < 5 ? correct2AudioRef.current : correctAudioRef.current;
+        let playVolume = 0.5;
+        if ((newStreak === 5 || newStreak === 7 || (newStreak >= 10 && newStreak % 5 === 0)) && streak5AudioRef.current) {
+          audioEl = streak5AudioRef.current;
+          playVolume = 1.0;
+        }
+        
+        if (audioEl) {
+          audioEl.volume = playVolume;
+          audioEl.playbackRate = 1.0;
+          audioEl.preservesPitch = true;
+          audioEl.currentTime = 0;
+          const playPromise = audioEl.play();
+          if (playPromise !== undefined) {
+            playPromise.catch(e => {
+              // Ignore NotSupportedError which happens with empty/missing audio files
+              if (e.name !== 'NotSupportedError') {
+                console.error("Audio play error", e);
+              }
+            });
+          }
+        }
+      }
+      
       if (isReviewMode) {
-        // Only remove from wrong questions if answering correctly in Review mode
         removeWrongQuestion(currentQuestion);
       }
     } else {
+      if (streak >= 3) {
+        setStreakBroken(true);
+      }
+      setStreak(0);
+      
+      {
+        let audioEl = wrongAudioRef.current;
+        
+        if (audioEl) {
+          audioEl.volume = 1.0;
+          audioEl.playbackRate = 1.0;
+          audioEl.currentTime = 0;
+          const playPromise = audioEl.play();
+          if (playPromise !== undefined) {
+            playPromise.catch(e => {
+              if (e.name !== 'NotSupportedError') {
+                console.error("Audio play error", e);
+              }
+            });
+          }
+        }
+      }
+      
       addWrongQuestion(currentQuestion);
       setExamWrongQuestions(prev => {
         if (!prev.find(q => q.id === currentQuestion.id)) {
@@ -216,6 +406,15 @@ export default function Quiz({ chapter, onBack }: Props) {
         }
         return prev;
       });
+    }
+
+    if (isExamMode) {
+      setExamAnswers(prev => ({ ...prev, [currentQuestion.id]: key }));
+      // Auto advance quickly in exam mode
+      setTimeout(() => {
+        handleNext(isAnswerCorrect);
+      }, 400);
+      return;
     }
 
     // Record answer for review at the end 
@@ -236,6 +435,40 @@ export default function Quiz({ chapter, onBack }: Props) {
       }, delay);
     }
   };
+
+  // Keyboard Navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore key events if a modifier is pressed (ctrl, cmd, alt, shift)
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      
+      // Prevent handling if typing in an input
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+
+      if (!selectedOption && currentQuestion) {
+        const optionKeys = Object.keys(currentQuestion.options || {});
+        let keyToSelect: string | null = null;
+
+        if (e.key === 'a' || e.key === 'A' || e.key === '1') keyToSelect = 'A';
+        if (e.key === 'b' || e.key === 'B' || e.key === '2') keyToSelect = 'B';
+        if (e.key === 'c' || e.key === 'C' || e.key === '3') keyToSelect = 'C';
+        if (e.key === 'd' || e.key === 'D' || e.key === '4') keyToSelect = 'D';
+
+        if (keyToSelect && optionKeys.includes(keyToSelect)) {
+          handleSelectOption(keyToSelect);
+        }
+      } else if (selectedOption && !isExamMode && isCorrect !== null) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          // Prevent default scrolling for space
+          if (e.key === ' ') e.preventDefault();
+          handleNext(isCorrect);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentQuestion, selectedOption, isCorrect, isExamMode]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -273,6 +506,13 @@ export default function Quiz({ chapter, onBack }: Props) {
       return acc;
     }, 0);
 
+    // Process longest time consumed questions
+    const slowQuestions = chapter.questions
+      ?.map(q => ({ ...q, time: questionTimeSpent[q.id] || 0 }))
+      .filter(q => q.time > 0)
+      .sort((a, b) => b.time - a.time)
+      .slice(0, 5) || [];
+
     return (
       <div className="max-w-2xl mx-auto mt-8 w-full px-5">
         <div className="card-bauhaus bg-white p-10 text-center relative mb-8">
@@ -299,16 +539,25 @@ export default function Quiz({ chapter, onBack }: Props) {
              <p className="font-bold uppercase tracking-wider text-base mb-8 text-ink">BẠN ĐÃ HOÀN THÀNH TẤT CẢ CÂU HỎI.</p>
           )}
 
-          <div className="flex items-center justify-center gap-6 font-bold uppercase tracking-wider text-base text-ink bg-white p-6 border-4 border-ink shadow-[4px_4px_0px_0px_#121212] mb-10">
+          <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 font-bold uppercase tracking-wider text-sm sm:text-base text-ink bg-white p-4 sm:p-6 border-4 border-ink shadow-[4px_4px_0px_0px_#121212] mb-10">
             <div className="flex flex-col items-center">
-              <span className="text-ink mb-1 flex items-center gap-1"><Clock className="w-5 h-5"/> THỜI GIAN</span>
-              <span className="font-black text-xl">{formatTime(timeSpent)}</span>
+              <span className="text-ink mb-1 flex items-center gap-1"><Clock className="w-4 h-4 sm:w-5 sm:h-5"/> THỜI GIAN</span>
+              <span className="font-black text-lg sm:text-xl">{formatTime(timeSpent)}</span>
             </div>
-            <div className="w-1 h-12 bg-ink"></div>
+            <div className="w-1 h-12 bg-ink hidden sm:block"></div>
             <div className="flex flex-col items-center">
               <span className="text-ink mb-1">TB / CÂU</span>
-              <span className="font-black text-xl">{totalQuestions > 0 ? (timeSpent / totalQuestions).toFixed(1) : 0}s</span>
+              <span className="font-black text-lg sm:text-xl">{totalQuestions > 0 ? (timeSpent / totalQuestions).toFixed(1) : 0}s</span>
             </div>
+            {!isExamMode && (
+              <>
+                <div className="w-1 h-12 bg-ink hidden sm:block"></div>
+                <div className="flex flex-col items-center text-semantic-error">
+                  <span className="mb-1 flex items-center gap-1 text-ink whitespace-nowrap"><Flame className="w-4 h-4 sm:w-5 sm:h-5 text-semantic-error"/> CHUỖI TỐT NHẤT</span>
+                  <span className="font-black text-lg sm:text-xl">{maxStreak}</span>
+                </div>
+              </>
+            )}
           </div>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
@@ -321,7 +570,7 @@ export default function Quiz({ chapter, onBack }: Props) {
             <button 
               onClick={() => {
                 // Restart
-                const initialQueue = [...chapter.questions];
+                const initialQueue = chapter.questions.map(shuffleQuestionOptions);
                 setQueue(initialQueue);
                 setCurrentQuestion(initialQueue[0]);
                 setMasteredCount(0);
@@ -332,6 +581,9 @@ export default function Quiz({ chapter, onBack }: Props) {
                 setTimeLeft(chapter.timeLimit || null);
                 setStartTime(Date.now());
                 setTimeSpent(0);
+                setStreak(0);
+                setMaxStreak(0);
+                setStreakBroken(false);
               }}
               className="btn-primary w-full sm:w-auto px-8 py-4 text-base flex items-center justify-center gap-3"
             >
@@ -348,32 +600,66 @@ export default function Quiz({ chapter, onBack }: Props) {
             <div className="space-y-6">
               {examWrongQuestions.map((q, idx) => (
                 <div key={q.id} className="card-bauhaus p-6 bg-white border-4 border-ink shadow-[8px_8px_0px_0px_#121212] rounded-none">
-                  <p className="font-bold text-lg mb-6">
-                    <span className="bg-primary text-white border-2 border-ink px-2 py-1 mr-3">Q{q.id}</span> 
-                    {q.content.split(/(?=Cách hỏi\s*\d*:|cách hỏi\s*\d*:)/i)[0]}
+                  <p className="font-bold text-base sm:text-lg mb-6 leading-relaxed">
+                    <span className="bg-primary text-white border-2 border-ink px-2 py-1 mr-3 text-sm align-middle">Q{q.id}</span> 
+                    {renderTextWithCode(q.content.split(/(?=Cách hỏi\s*\d*:|cách hỏi\s*\d*:)/i)[0])}
                   </p>
                   
                   <div className="space-y-4 mt-4 p-4 border-l-4 border-ink bg-[#F0F0F0]">
-                    <p className="font-bold text-lg">
+                    <p className="font-bold text-base sm:text-lg">
                       <span className="text-primary mr-3 inline-flex items-center">
                         <X className="w-5 h-5 mr-1 inline" strokeWidth={3}/>
                         BẠN CHỌN:
                       </span>
-                      <span className="line-through">{examAnswers[q.id] || "BỎ TRỐNG"}</span>
+                      <span className="line-through">{renderTextWithCode(examAnswers[q.id] || "BỎ TRỐNG")}</span>
                     </p>
-                    <p className="font-bold text-lg">
+                    <p className="font-bold text-base sm:text-lg">
+                      <span className="text-[#0C9E59] mr-3 inline-flex items-center">
+                        <Check className="w-5 h-5 mr-1 inline" strokeWidth={3}/>
+                        ĐÁP ÁN ĐÚNG:
+                      </span>
+                      {renderTextWithCode(q.correct_answer)}
+                    </p>
+                    {q.explanation && (
+                      <div className="mt-6 bg-white p-4 border-4 border-ink text-[15px] sm:text-base font-medium">
+                        <p className="font-black uppercase tracking-wider mb-2 text-sm">GIẢI THÍCH:</p>
+                        {renderTextWithCode(q.explanation)}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Display slow questions for review */}
+        {slowQuestions.length > 0 && (
+          <div className="mb-16 mt-8">
+            <h3 className="heading-bauhaus text-2xl mb-8 border-b-4 border-ink pb-2">CÁC CÂU TỐN NHIỀU THỜI GIAN NHẤT</h3>
+            <div className="space-y-6">
+              {slowQuestions.map((q, idx) => (
+                <div key={q.id} className="card-bauhaus p-6 bg-white border-4 border-ink shadow-[8px_8px_0px_0px_#121212] rounded-none">
+                  <div className="flex justify-between items-start mb-4 gap-4">
+                    <p className="font-bold text-base sm:text-lg leading-relaxed pt-1">
+                      <span className="bg-primary-yellow text-ink border-2 border-ink px-2 py-1 mr-3 text-sm align-middle shadow-[2px_2px_0px_0px_#121212]">
+                        Q{q.id}
+                      </span> 
+                      {renderTextWithCode(q.content.split(/(?=Cách hỏi\s*\d*:|cách hỏi\s*\d*:)/i)[0])}
+                    </p>
+                    <div className="shrink-0 font-display font-bold text-xl bg-[#F0F0F0] border-2 border-ink px-3 py-2 text-primary shadow-[2px_2px_0px_0px_#121212]">
+                      {formatTime(q.time)}
+                    </div>
+                  </div>
+                  
+                  <div className="p-4 border-l-4 border-ink bg-[#F0F0F0]">
+                    <p className="font-bold text-base sm:text-lg">
                       <span className="text-[#0C9E59] mr-3 inline-flex items-center">
                         <Check className="w-5 h-5 mr-1 inline" strokeWidth={3}/>
                         ĐÁP ÁN:
                       </span>
-                      {q.correct_answer}
+                      {renderTextWithCode(q.correct_answer)}
                     </p>
-                    {q.explanation && (
-                      <div className="mt-6 bg-white p-4 border-4 border-ink text-base font-medium">
-                        <p className="font-black uppercase tracking-wider mb-2">GIẢI THÍCH:</p>
-                        {q.explanation}
-                      </div>
-                    )}
                   </div>
                 </div>
               ))}
@@ -385,7 +671,7 @@ export default function Quiz({ chapter, onBack }: Props) {
   }
 
   return (
-    <div className="max-w-3xl mx-auto w-full px-4 sm:px-0">
+    <div ref={containerRef} className="max-w-3xl mx-auto w-full px-4 sm:px-0">
         {currentQuestion && (
           <>
             {/* Question Meta */}
@@ -394,10 +680,63 @@ export default function Quiz({ chapter, onBack }: Props) {
                 <ArrowLeft strokeWidth={2.5} className="w-6 h-6 mr-1 sm:mr-2 group-hover:-translate-x-1 transition-transform" />
                 <span className="font-sans text-base sm:text-lg border-b-2 border-transparent group-hover:border-primary hidden sm:inline">Quay lại</span>
               </button>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-3">
+                {/* Streak Indicator */}
+                {!isExamMode && (
+                  <motion.div 
+                    animate={
+                      streak >= 3 
+                        ? { scale: [1, 1.1, 1], rotate: [0, -5, 5, 0] } 
+                        : streakBroken 
+                        ? { opacity: 0.5, filter: "grayscale(100%)" } 
+                        : {}
+                    }
+                    transition={streak >= 3 ? { repeat: Infinity, duration: 1.5 } : {}}
+                    className={`flex items-center gap-1.5 border-2 shadow-[2px_2px_0px_0px_#121212] px-2 sm:px-3 py-1 font-bold ${
+                      streak >= 3 
+                        ? "bg-primary-yellow border-semantic-error text-semantic-error" 
+                        : streak > 0 
+                        ? "bg-white border-ink text-primary" 
+                        : "bg-surface border-ink text-slate"
+                    }`}
+                  >
+                    <Flame className={`w-4 h-4 sm:w-5 sm:h-5 ${streak >= 3 ? "animate-pulse" : ""}`} />
+                    <span className="text-sm sm:text-base">{streak}</span>
+                    
+                    {/* Streak Popup Messages */}
+                    <AnimatePresence>
+                      {showStreakPopup && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 10, scale: 0.8 }}
+                          animate={{ opacity: 1, y: -40, scale: 1.1 }}
+                          exit={{ opacity: 0, scale: 0.8 }}
+                          className="absolute -top-4 right-0 z-50 whitespace-nowrap text-semantic-warning font-black text-lg drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] pointer-events-none"
+                        >
+                          {streakPopupText}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </motion.div>
+                )}
+                
+                <div className="flex items-center gap-2 bg-white border-2 border-ink shadow-[4px_4px_0px_0px_#121212] px-3 py-1 rounded-none hidden lg:flex">
+                  <span className="text-sm font-bold">Vol</span>
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    value={volume}
+                    onChange={(e) => {
+                      setVolume(parseFloat(e.target.value));
+                      if (parseFloat(e.target.value) > 0) setIsMuted(false);
+                    }}
+                    className="w-20 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary border border-ink"
+                  />
+                </div>
                 <button 
                   onClick={() => setIsMuted(!isMuted)}
-                  className="bg-white border-2 border-ink shadow-[4px_4px_0px_0px_#121212] p-2 hover:-translate-y-1 transition-transform rounded-none"
+                  className="bg-white border-2 border-ink shadow-[4px_4px_0px_0px_#121212] p-2 hover:-translate-y-1 transition-transform rounded-none flex-shrink-0"
                 >
                   {isMuted ? <VolumeX className="w-5 h-5 text-slate" /> : <Volume2 className="w-5 h-5 text-primary" />}
                 </button>
@@ -417,12 +756,12 @@ export default function Quiz({ chapter, onBack }: Props) {
             <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-24 h-6 bg-black/5 -rotate-2"></div>
             
             {/* Question Text */}
-            <div className="mb-8 relative z-10">
-              <h1 className="heading-bauhaus text-xl sm:text-2xl leading-relaxed text-ink">
-                <span className="inline-block bg-surface-soft border-2 border-ink px-2 py-0.5 rounded-sm -rotate-2 mr-3 align-middle shadow-[2px_2px_0px_#2d2d2d] tabular-nums text-lg">
-                  Q{currentQuestion.id}
+            <div className="mb-6 relative z-10">
+              <h1 className="font-bold text-base sm:text-[17px] leading-relaxed text-ink">
+                <span className="inline-block bg-surface-soft border-2 border-ink px-2 py-0.5 rounded-sm -rotate-2 mr-3 align-middle shadow-[2px_2px_0px_#2d2d2d] tabular-nums text-sm">
+                  Q{currentQuestion.id} &bull; {currentQuestionTimer}s
                 </span>
-                {mainQuestion}
+                {renderTextWithCode(mainQuestion)}
                 {otherWays && (
                   <button 
                     onClick={() => setShowOtherWays(!showOtherWays)}
@@ -435,11 +774,11 @@ export default function Quiz({ chapter, onBack }: Props) {
               </h1>
               
               {showOtherWays && otherWays && (
-                <div className="mt-4 bg-[#F0F0F0] border-2 border-ink p-5 text-left font-sans text-base text-ink rounded-none">
+                <div className="mt-4 bg-[#F0F0F0] border-2 border-ink p-4 text-left font-sans text-sm sm:text-[15px] text-ink rounded-none">
                   <p className="font-bold underline decoration-wavy decoration-ink mb-2">Các cách hỏi khác:</p>
                   <ul className="space-y-2 list-disc list-inside marker:text-primary">
                     {otherWays.map((way, idx) => (
-                       <li key={idx} className="leading-snug">{way}</li>
+                       <li key={idx} className="leading-snug font-medium">{renderTextWithCode(way)}</li>
                     ))}
                   </ul>
                 </div>
@@ -455,9 +794,9 @@ export default function Quiz({ chapter, onBack }: Props) {
                 const correctKey = currentQuestion.correct_answer?.trim().toUpperCase();
                 const isCorrectAnswerOption = key.toUpperCase() === correctKey;
                 
-                let buttonClass = "w-full text-left px-5 py-4 rounded-none border-[2px] sm:border-[4px] transition-all flex items-center gap-4 group ";
-                let circleClass = "w-10 h-10 border-[3px] flex items-center justify-center font-display font-bold text-lg flex-shrink-0 transition-colors bg-white shadow-[2px_2px_0px_#2d2d2d] ";
-                let textClass = "font-sans text-base sm:text-lg leading-snug flex-1 ";
+                let buttonClass = "w-full text-left px-4 sm:px-5 py-3 sm:py-4 rounded-none border-[2px] sm:border-[4px] transition-all flex items-center gap-3 sm:gap-4 group ";
+                let circleClass = "w-8 h-8 sm:w-10 sm:h-10 border-[3px] flex items-center justify-center font-display font-bold text-base sm:text-lg flex-shrink-0 transition-colors bg-white shadow-[2px_2px_0px_#2d2d2d] ";
+                let textClass = "font-sans text-[15px] sm:text-base leading-snug flex-1 font-medium ";
                 
                 if (selectedOption) {
                   if (isExamMode) {
@@ -506,7 +845,7 @@ export default function Quiz({ chapter, onBack }: Props) {
                     disabled={!!selectedOption}
                   >
                     <span className={circleClass}>{key}</span>
-                    <span className={textClass}>{text}</span>
+                    <span className={textClass}>{renderTextWithCode(String(text))}</span>
                     
                     {/* Result Icons - Only in Normal Mode */}
                     {!isExamMode && selectedOption && isCorrectAnswerOption && (
@@ -527,20 +866,20 @@ export default function Quiz({ chapter, onBack }: Props) {
             {!isExamMode && selectedOption && currentQuestion.explanation && (
               <div className="mt-8 pt-6 border-t-[3px] border-dashed border-ink/20 animate-in fade-in slide-in-from-top-4">
                 <div className="flex flex-wrap items-center gap-3 mb-4">
-                  <p className="heading-bauhaus text-xl mr-2 px-2 py-1 bg-[#F0F0F0] border-2 border-ink shadow-[2px_2px_0px_#121212]">GIẢI THÍCH:</p>
+                  <p className="font-black uppercase tracking-tighter text-lg mr-2 px-2 py-1 bg-[#F0F0F0] border-2 border-ink shadow-[2px_2px_0px_#121212]">GIẢI THÍCH:</p>
                   {(currentQuestion.difficulty || currentQuestion.bloom_level || currentQuestion.question_type) && (
-                    <div className="flex flex-wrap gap-2 text-base font-sans text-ink">
+                    <div className="flex flex-wrap gap-2 text-sm font-sans text-ink font-medium">
                       {currentQuestion.difficulty && <span className="border-2 border-ink/40 border-dashed px-3 py-0.5 rounded-full rotate-1">{currentQuestion.difficulty}</span>}
                       {currentQuestion.bloom_level && <span className="border-2 border-ink/40 border-dashed px-3 py-0.5 rounded-full -rotate-1">{currentQuestion.bloom_level}</span>}
                       {currentQuestion.question_type && <span className="border-2 border-ink/40 border-dashed px-3 py-0.5 rounded-full rotate-2">{currentQuestion.question_type}</span>}
                     </div>
                   )}
                 </div>
-                <div className="font-sans text-base leading-relaxed bg-[#F0F0F0] border-[2px] sm:border-[4px] border-ink p-5 shadow-[4px_4px_0px_0px_#121212] rounded-none">
-                  <p>{currentQuestion.explanation}</p>
+                <div className="font-sans text-sm sm:text-[15px] leading-relaxed font-medium bg-[#F0F0F0] border-[2px] sm:border-[4px] border-ink p-4 sm:p-5 shadow-[4px_4px_0px_0px_#121212] rounded-none">
+                  <p>{renderTextWithCode(currentQuestion.explanation)}</p>
                   
                   {(currentQuestion.knowledge_area || currentQuestion.source_reference) && (
-                    <div className="mt-4 pt-4 border-t-2 border-ink/20 text-base flex flex-col gap-2">
+                    <div className="mt-4 pt-4 border-t-2 border-ink/20 text-sm flex flex-col gap-2">
                       {currentQuestion.knowledge_area && (
                         <div className="flex flex-wrap gap-2 items-center">
                           <span className="font-bold underline decoration-wavy decoration-primary">Phạm vi:</span>
@@ -572,17 +911,18 @@ export default function Quiz({ chapter, onBack }: Props) {
                   className="btn-secondary px-6 py-4 flex items-center justify-center gap-3 sm:w-auto w-full text-base"
                 >
                   <Presentation strokeWidth={2.5} className="w-6 h-6" />
-                  Xem Giáo Trình (Chương {currentQuestion.chapterId})
+                  Xem Giáo Trình
                 </button>
               </div>
             )}
+            <div ref={feedbackRef} className="pb-28 md:pb-0 min-h-4" />
           </div>
 
           <PdfViewerModal
             isOpen={isPdfModalOpen}
             onClose={() => setIsPdfModalOpen(false)}
             fileUrl={currentPdfUrl}
-            title={`Giáo Trình Chương ${currentQuestion.chapterId}`}
+            title="Giáo Trình"
           />
 
           {/* Feedback Bar (Normal Mode) */}
@@ -623,9 +963,21 @@ export default function Quiz({ chapter, onBack }: Props) {
   );
 };
 
+  const [currentSong, setCurrentSong] = useState(() => Math.random() > 0.5 ? '/song.mp3' : '/song2.mp3');
+
+  useEffect(() => {
+    setCurrentSong(Math.random() > 0.5 ? '/song.mp3' : '/song2.mp3');
+  }, [chapter.chapter]);
+
   return (
     <>
-      <audio ref={audioRef} src="/song.mp3" autoPlay loop muted={isMuted} className="hidden" />
+      <audio ref={audioRef} src={currentSong} autoPlay loop muted={isMuted} className="hidden" />
+      <audio ref={correctAudioRef} src="/true.mp3" preload="auto" className="hidden" />
+      <audio ref={correct2AudioRef} src="/true2.mp3" preload="auto" className="hidden" />
+      <audio ref={wrongAudioRef} src="/false.mp3" preload="auto" className="hidden" />
+      <audio ref={endAudioRef} src="/end.mp3" preload="auto" className="hidden" />
+      <audio ref={streak3AudioRef} src="/sreak3.mp3" preload="auto" className="hidden" />
+      <audio ref={streak5AudioRef} src="/streak5.mp3" preload="auto" className="hidden" />
       {renderQuizContent()}
     </>
   );
