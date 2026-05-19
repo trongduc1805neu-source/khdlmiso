@@ -36,7 +36,7 @@ export default function PdfViewerModal({ isOpen, onClose, fileUrl, title = 'Xem 
     if (isOpen) {
       window.addEventListener('keydown', handleEsc);
       document.body.style.overflow = 'hidden';
-      // Reset state on open
+      // Reset state on open when file changes or newly opened
       setPageNumber(1);
       setScale(1.0);
       setIsLoading(true);
@@ -45,7 +45,7 @@ export default function PdfViewerModal({ isOpen, onClose, fileUrl, title = 'Xem 
       window.removeEventListener('keydown', handleEsc);
       document.body.style.overflow = 'unset';
     };
-  }, [isOpen, onClose, fileUrl]);
+  }, [isOpen, fileUrl]); // Removed onClose from dependencies to prevent unintended resets
 
   function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
     setNumPages(numPages);

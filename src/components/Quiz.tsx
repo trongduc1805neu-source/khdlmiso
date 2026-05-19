@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Chapter, Question } from '../types';
 import { ArrowLeft, CheckCircle2, XCircle, RotateCcw, Presentation, HelpCircle, Check, X, Clock, Target, Volume2, VolumeX, Flame } from 'lucide-react';
 import PdfViewerModal from './PdfViewerModal';
+import { ContentRenderer } from './ContentRenderer';
 
 interface Props {
   chapter: Chapter;
@@ -31,49 +32,6 @@ const removeWrongQuestion = (q: Question) => {
   } catch (e) {
     console.error(e);
   }
-};
-
-const renderTextWithCode = (text: string) => {
-  if (!text) return text;
-  
-  // Split by either triple backtick blocks (multiline) or single backtick (inline)
-  const parts = text.split(/(```[\s\S]*?```|`[^`]+`)/g);
-  
-  return parts.map((part, i) => {
-    if (part.startsWith('```') && part.endsWith('```')) {
-      // Extract the content, removing the backticks and the optional language identifier
-      const match = part.match(/^```([a-zA-Z]*)\n?([\s\S]*?)\n?```$/);
-      const codeContent = match ? match[2] : part.slice(3, -3);
-      
-      return (
-        <pre key={i} className="bg-[#E5E7EB] p-4 sm:p-5 font-mono text-sm sm:text-base text-primary-blue my-4 border-4 border-ink font-bold whitespace-pre-wrap break-words overflow-x-auto shadow-[4px_4px_0px_0px_#121212]">
-          <code>{codeContent}</code>
-        </pre>
-      );
-    } else if (part.startsWith('`') && part.endsWith('`')) {
-      return (
-        <code key={i} className="bg-[#E5E7EB] px-1.5 py-0.5 font-mono text-[0.9em] text-primary-blue mx-0.5 border-2 border-ink font-bold whitespace-pre-wrap break-words">
-          {part.slice(1, -1)}
-        </code>
-      );
-    }
-    
-    // Process markdown newlines for standard text
-    if (part.includes('\n')) {
-      return (
-        <span key={i}>
-          {part.split('\n').map((line, j, arr) => (
-            <React.Fragment key={j}>
-              {line}
-              {j < arr.length - 1 && <br />}
-            </React.Fragment>
-          ))}
-        </span>
-      );
-    }
-    
-    return <span key={i}>{part}</span>;
-  });
 };
 
 const shuffleQuestionOptions = (question: Question): Question => {
@@ -602,7 +560,7 @@ export default function Quiz({ chapter, onBack }: Props) {
                 <div key={q.id} className="card-bauhaus p-6 bg-white border-4 border-ink shadow-[8px_8px_0px_0px_#121212] rounded-none">
                   <p className="font-bold text-base sm:text-lg mb-6 leading-relaxed">
                     <span className="bg-primary text-white border-2 border-ink px-2 py-1 mr-3 text-sm align-middle">Q{q.id}</span> 
-                    {renderTextWithCode(q.content.split(/(?=Cách hỏi\s*\d*:|cách hỏi\s*\d*:)/i)[0])}
+                    <ContentRenderer content={q.content.split(/(?=Cách hỏi\s*\d*:|cách hỏi\s*\d*:)/i)[0]} className="inline" />
                   </p>
                   
                   <div className="space-y-4 mt-4 p-4 border-l-4 border-ink bg-[#F0F0F0]">
@@ -611,19 +569,19 @@ export default function Quiz({ chapter, onBack }: Props) {
                         <X className="w-5 h-5 mr-1 inline" strokeWidth={3}/>
                         BẠN CHỌN:
                       </span>
-                      <span className="line-through">{renderTextWithCode(examAnswers[q.id] || "BỎ TRỐNG")}</span>
+                      <span className="line-through"><ContentRenderer content={examAnswers[q.id] || "BỎ TRỐNG"} className="inline" /></span>
                     </p>
                     <p className="font-bold text-base sm:text-lg">
                       <span className="text-[#0C9E59] mr-3 inline-flex items-center">
                         <Check className="w-5 h-5 mr-1 inline" strokeWidth={3}/>
                         ĐÁP ÁN ĐÚNG:
                       </span>
-                      {renderTextWithCode(q.correct_answer)}
+                      <ContentRenderer content={q.correct_answer} className="inline" />
                     </p>
                     {q.explanation && (
                       <div className="mt-6 bg-white p-4 border-4 border-ink text-[15px] sm:text-base font-medium">
                         <p className="font-black uppercase tracking-wider mb-2 text-sm">GIẢI THÍCH:</p>
-                        {renderTextWithCode(q.explanation)}
+                        <ContentRenderer content={q.explanation} />
                       </div>
                     )}
                   </div>
@@ -645,7 +603,7 @@ export default function Quiz({ chapter, onBack }: Props) {
                       <span className="bg-primary-yellow text-ink border-2 border-ink px-2 py-1 mr-3 text-sm align-middle shadow-[2px_2px_0px_0px_#121212]">
                         Q{q.id}
                       </span> 
-                      {renderTextWithCode(q.content.split(/(?=Cách hỏi\s*\d*:|cách hỏi\s*\d*:)/i)[0])}
+                      <ContentRenderer content={q.content.split(/(?=Cách hỏi\s*\d*:|cách hỏi\s*\d*:)/i)[0]} className="inline" />
                     </p>
                     <div className="shrink-0 font-display font-bold text-xl bg-[#F0F0F0] border-2 border-ink px-3 py-2 text-primary shadow-[2px_2px_0px_0px_#121212]">
                       {formatTime(q.time)}
@@ -658,7 +616,7 @@ export default function Quiz({ chapter, onBack }: Props) {
                         <Check className="w-5 h-5 mr-1 inline" strokeWidth={3}/>
                         ĐÁP ÁN:
                       </span>
-                      {renderTextWithCode(q.correct_answer)}
+                      <ContentRenderer content={q.correct_answer} className="inline" />
                     </p>
                   </div>
                 </div>
@@ -761,7 +719,7 @@ export default function Quiz({ chapter, onBack }: Props) {
                 <span className="inline-block bg-surface-soft border-2 border-ink px-2 py-0.5 rounded-sm -rotate-2 mr-3 align-middle shadow-[2px_2px_0px_#2d2d2d] tabular-nums text-sm">
                   Q{currentQuestion.id} &bull; {currentQuestionTimer}s
                 </span>
-                {renderTextWithCode(mainQuestion)}
+                <ContentRenderer content={mainQuestion} className="inline" />
                 {otherWays && (
                   <button 
                     onClick={() => setShowOtherWays(!showOtherWays)}
@@ -778,7 +736,7 @@ export default function Quiz({ chapter, onBack }: Props) {
                   <p className="font-bold underline decoration-wavy decoration-ink mb-2">Các cách hỏi khác:</p>
                   <ul className="space-y-2 list-disc list-inside marker:text-primary">
                     {otherWays.map((way, idx) => (
-                       <li key={idx} className="leading-snug font-medium">{renderTextWithCode(way)}</li>
+                       <li key={idx} className="leading-snug font-medium"><ContentRenderer content={way} className="inline" /></li>
                     ))}
                   </ul>
                 </div>
@@ -845,7 +803,7 @@ export default function Quiz({ chapter, onBack }: Props) {
                     disabled={!!selectedOption}
                   >
                     <span className={circleClass}>{key}</span>
-                    <span className={textClass}>{renderTextWithCode(String(text))}</span>
+                    <span className={textClass}><ContentRenderer content={String(text)} className="inline" /></span>
                     
                     {/* Result Icons - Only in Normal Mode */}
                     {!isExamMode && selectedOption && isCorrectAnswerOption && (
@@ -876,7 +834,7 @@ export default function Quiz({ chapter, onBack }: Props) {
                   )}
                 </div>
                 <div className="font-sans text-sm sm:text-[15px] leading-relaxed font-medium bg-[#F0F0F0] border-[2px] sm:border-[4px] border-ink p-4 sm:p-5 shadow-[4px_4px_0px_0px_#121212] rounded-none">
-                  <p>{renderTextWithCode(currentQuestion.explanation)}</p>
+                  <ContentRenderer content={currentQuestion.explanation} />
                   
                   {(currentQuestion.knowledge_area || currentQuestion.source_reference) && (
                     <div className="mt-4 pt-4 border-t-2 border-ink/20 text-sm flex flex-col gap-2">

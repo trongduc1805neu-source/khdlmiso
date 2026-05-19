@@ -120,9 +120,12 @@ export default function App() {
               {/* Mobile Chapter List View */}
               <div className="flex-1 flex flex-col w-full h-full pt-6 overflow-hidden md:hidden relative z-10 px-4">
                 <div className="w-full flex-1 overflow-y-auto pb-[calc(env(safe-area-inset-bottom,20px)+20px)]">
-                  <div className="mb-10 w-full relative">
-                    <div className="card-bauhaus p-2 bg-white flex justify-center">
-                      <img src="/VietQr-.png?v=1" alt="Donate QR" className="w-[80%] max-w-[280px] h-auto object-contain grayscale hover:grayscale-0 transition-all duration-300" />
+                  <div className="mb-10 w-full flex flex-col items-center justify-center relative group px-2">
+                    <div className="card-bauhaus bg-white w-full max-w-sm p-6 shadow-[8px_8px_0px_0px_#121212]">
+                      <h3 className="heading-bauhaus text-xl text-center mb-6 text-ink tracking-tight">ỦNG HỘ TÁC GIẢ</h3>
+                      <div className="border-4 border-ink p-2 mb-2 bg-[#F0F0F0]">
+                        <img src="/VietQr-.png?v=1" alt="Donate QR" className="w-full h-auto object-contain transition-all duration-300" />
+                      </div>
                     </div>
                   </div>
                   
@@ -165,7 +168,7 @@ export default function App() {
                     <div className="w-12 h-12 bg-primary-blue absolute -bottom-6 -left-6 border-4 border-ink z-10 hidden lg:block rotate-45"></div>
                     <h3 className="heading-bauhaus text-2xl text-center mb-8 text-ink tracking-tight">ỦNG HỘ TÁC GIẢ</h3>
                     <div className="border-4 border-ink p-2 mb-2 bg-[#F0F0F0]">
-                      <img src="/VietQr-.png?v=1" alt="Donate QR" className="w-full h-auto object-contain grayscale group-hover:grayscale-0 transition-all duration-300" />
+                      <img src="/VietQr-.png?v=1" alt="Donate QR" className="w-full h-auto object-contain transition-all duration-300" />
                     </div>
                   </div>
                 </div>
