@@ -126,6 +126,7 @@ export default function Quiz({ chapter, onBack }: Props) {
 
   const feedbackRef = React.useRef<HTMLDivElement>(null);
   const containerRef = React.useRef<HTMLDivElement>(null);
+  const autoAdvanceTimerRef = React.useRef<NodeJS.Timeout | null>(null);
 
   // Scroll to explanation when answered
   useEffect(() => {
@@ -266,6 +267,11 @@ export default function Quiz({ chapter, onBack }: Props) {
   }, [isMockExamMode, isSubmitted, queue, examAnswers]);
 
   const handleNext = (isAnswerCorrect: boolean) => {
+    if (autoAdvanceTimerRef.current) {
+      clearTimeout(autoAdvanceTimerRef.current);
+      autoAdvanceTimerRef.current = null;
+    }
+
     if (isMockExamMode) {
       if (mockExamIndex < queue.length - 1) {
         setMockExamIndex(prev => prev + 1);
@@ -424,7 +430,7 @@ export default function Quiz({ chapter, onBack }: Props) {
 
     if (isAutoExamMode) {
       setExamAnswers(prev => ({ ...prev, [currentQuestion.id]: key }));
-      setTimeout(() => handleNext(isAnswerCorrect), 400);
+      autoAdvanceTimerRef.current = setTimeout(() => handleNext(isAnswerCorrect), 400);
       return;
     }
 
@@ -438,7 +444,7 @@ export default function Quiz({ chapter, onBack }: Props) {
 
     // Auto advance with delay to ponder
     const delay = currentQuestion.explanation ? 6000 : (isAnswerCorrect ? 1500 : 3500); 
-    setTimeout(() => {
+    autoAdvanceTimerRef.current = setTimeout(() => {
       handleNext(isAnswerCorrect);
     }, delay);
   };
