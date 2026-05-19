@@ -158,8 +158,14 @@ export function generatePracticeExam(): Chapter {
 
   // Step 5 & 6: Select questions and prioritize unseen ones
   // Pre-process alltopics into groups
+  const combinedData = [
+    ...(allTopicsData as any[]).map(q => ({ ...q, source: 'all' })),
+    ...(de1 as any[]).map(q => ({ ...q, source: 'de1' })),
+    ...(de2 as any[]).map(q => ({ ...q, source: 'de2' }))
+  ];
+
   const questionBank: Record<string, any[]> = {};
-  (allTopicsData as any[]).forEach(q => {
+  combinedData.forEach(q => {
     if (!questionBank[q.topic]) questionBank[q.topic] = [];
     questionBank[q.topic].push(q);
   });
@@ -180,8 +186,10 @@ export function generatePracticeExam(): Chapter {
       
       // Sort by seen count ascending, then random
       const shuffled = [...available].sort((a, b) => {
-        const seenA = seenQuestions[a.id] || 0;
-        const seenB = seenQuestions[b.id] || 0;
+        const idA = typeof a.id === 'string' ? a.id : `${a.source}_${a.id}`;
+        const idB = typeof b.id === 'string' ? b.id : `${b.source}_${b.id}`;
+        const seenA = seenQuestions[idA] || 0;
+        const seenB = seenQuestions[idB] || 0;
         if (seenA === seenB) return 0.5 - Math.random();
         return seenA - seenB;
       });
@@ -190,9 +198,10 @@ export function generatePracticeExam(): Chapter {
       
       // Map to standard Question interface
       const mappedSelected: Question[] = selected.map(q => {
-        selectedIds.push(q.id);
+        const mappedId = typeof q.id === 'string' ? q.id : `${q.source}_${q.id}`;
+        selectedIds.push(mappedId);
         return {
-          id: q.id,
+          id: mappedId,
           content: q.question,
           options: q.options,
           correct_answer: q.answer,
@@ -228,7 +237,7 @@ export function generateSpecificExam(examId: 'de1' | 'de2'): Chapter {
   const data = examId === 'de1' ? de1 : de2;
   
   const mappedQuestions: Question[] = (data as any[]).map(q => ({
-    id: q.id,
+    id: `${examId}_${q.id}`,
     content: q.question,
     options: q.options,
     correct_answer: q.answer,
@@ -248,10 +257,16 @@ export function generateTopicPractice(topicId: string): Chapter {
   const topicName = TOPIC_NAMES[topicId];
   if (!topicName) throw new Error("Invalid topic ID");
 
-  const topicQuestions = (allTopicsData as any[]).filter(q => q.topic === topicName);
+  const combinedData = [
+    ...(allTopicsData as any[]).map(q => ({ ...q, source: 'all' })),
+    ...(de1 as any[]).map(q => ({ ...q, source: 'de1' })),
+    ...(de2 as any[]).map(q => ({ ...q, source: 'de2' }))
+  ];
+
+  const topicQuestions = combinedData.filter(q => q.topic === topicName);
   
   const mappedQuestions: Question[] = topicQuestions.map(q => ({
-    id: q.id,
+    id: typeof q.id === 'string' ? q.id : `${q.source}_${q.id}`,
     content: q.question,
     options: q.options,
     correct_answer: q.answer,

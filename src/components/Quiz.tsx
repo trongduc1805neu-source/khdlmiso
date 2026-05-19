@@ -550,12 +550,14 @@ export default function Quiz({ chapter, onBack }: Props) {
           
           {isExamMode && (
             <div className="mb-8 p-6 border-4 border-ink bg-[#F0F0F0] shadow-[8px_8px_0px_0px_#121212]">
-              <p className="font-black text-4xl text-primary mb-2">
-                {correctScore} <span className="text-2xl text-ink">/ {totalQuestions}</span>
+              <p className="font-black text-5xl text-primary mb-2">
+                {totalQuestions > 0 ? ((correctScore / totalQuestions) * 10).toFixed(2) : "0.00"} <span className="text-2xl text-ink">/ 10</span>
               </p>
-              <p className="font-bold uppercase tracking-wider text-base text-ink">
-                {isPerfect ? "ĐIỂM TUYỆT ĐỐI" : "HÃY XEM LẠI CÁC CÂU SAI"}
-              </p>
+              <div className="flex flex-wrap items-center justify-center gap-4 text-sm font-bold mt-4">
+                <span className="bg-semantic-success/20 text-semantic-success border-2 border-semantic-success px-3 py-1">ĐÚNG: {correctScore}</span>
+                <span className="bg-semantic-error/20 text-semantic-error border-2 border-semantic-error px-3 py-1">SAI: {Object.keys(examAnswers).length - correctScore}</span>
+                <span className="bg-ink/10 text-ink border-2 border-ink px-3 py-1">BỎ TRỐNG: {totalQuestions - Object.keys(examAnswers).length}</span>
+              </div>
             </div>
           )}
 
@@ -619,12 +621,14 @@ export default function Quiz({ chapter, onBack }: Props) {
           </div>
         </div>
 
-        {/* Display wrong questions for review */}
-        {examWrongQuestions.length > 0 && (
+        {/* Display questions for review */}
+        {(isExamMode ? chapter.questions : examWrongQuestions)?.length > 0 && (
           <div className="mb-16 mt-16">
-            <h3 className="heading-bauhaus text-2xl mb-8 border-b-4 border-ink pb-2">CÂU CẦN XEM LẠI ({examWrongQuestions.length})</h3>
+            <h3 className="heading-bauhaus text-2xl mb-8 border-b-4 border-ink pb-2">
+              {isExamMode ? "CHI TIẾT BÀI LÀM" : `CÂU CẦN XEM LẠI (${examWrongQuestions.length})`}
+            </h3>
             <div className="space-y-6">
-              {examWrongQuestions.map((q, idx) => (
+              {(isExamMode ? chapter.questions : examWrongQuestions).map((q, idx) => (
                 <div key={q.id} className="card-bauhaus p-6 bg-white border-4 border-ink shadow-[8px_8px_0px_0px_#121212] rounded-none">
                   <p className="font-bold text-base sm:text-lg mb-6 leading-relaxed">
                     <span className="bg-primary text-white border-2 border-ink px-2 py-1 mr-3 text-sm align-middle">Q{q.id}</span> 
