@@ -1,0 +1,482 @@
+[
+  {
+    "topic": "Pandas – Pivot, Melt, Stack/Unstack",
+    "id": 1,
+    "question": "Trong thư viện pandas (Python), sau khi dùng hàm stack() trên DataFrame df, hàm nào sau đây được sử dụng để khôi phục lại cấu trúc bảng ban đầu?",
+    "options": {
+      "A": "df.explode()",
+      "B": "df.pivot()",
+      "C": "df.melt()",
+      "D": "df.unstack()"
+    },
+    "answer": "D"
+  },
+  {
+    "topic": "Tổng quan KHDL & Vai trò nghề nghiệp",
+    "id": 2,
+    "question": "Product Analyst thường phân tích loại dữ liệu gì?",
+    "options": {
+      "A": "Dữ liệu thời gian thực từ IoT",
+      "B": "Dữ liệu hành vi người dùng trên nền tảng số",
+      "C": "Dữ liệu mô hình học máy",
+      "D": "Dữ liệu nhân sự vận hành nội bộ"
+    },
+    "answer": "B"
+  },
+  {
+    "topic": "Python – Cú pháp & Cấu trúc điều khiển",
+    "id": 3,
+    "question": "Câu nào sau đây là một chú thích hợp lệ trong Python?",
+    "options": {
+      "A": "# Đây là một chú thích",
+      "B": "$ Đây là một chú thích",
+      "C": "/* Đây là một chú thích */",
+      "D": "``"
+    },
+    "answer": "A"
+  },
+  {
+    "topic": "Thu thập & Làm sạch Dữ liệu",
+    "id": 4,
+    "question": "Trường hợp nào sau đây thuộc nhóm dữ liệu không tồn tại?",
+    "options": {
+      "A": "Người dùng bỏ qua một câu hỏi nhạy cảm",
+      "B": "Thông tin của một cá nhân chưa được cập nhật",
+      "C": "Nhân viên bỏ sót một cột thông tin khi nhập liệu",
+      "D": "File log bị hỏng trong quá trình ghi nhận"
+    },
+    "answer": "D"
+  },
+  {
+    "topic": "Pandas – Chỉ mục phân cấp (Hierarchical Index)",
+    "id": 5,
+    "question": "Trong thư viện Pandas, khi làm việc với DataFrame df, hàm df.xs(), tham số level có vai trò chính là gì?",
+    "options": {
+      "A": "Xác định số lượng hàng tối đa sẽ được trả về từ DataFrame.",
+      "B": "Sắp xếp lại các tầng của MultiIndex theo thứ tự ưu tiên mới.",
+      "C": "Xác định mức chỉ số cụ thể trong MultiIndex mà giá trị cần tìm đang nằm ở đó.",
+      "D": "Chuyển đổi một cột dữ liệu thông thường thành một mức chỉ mục."
+    },
+    "answer": "C"
+  },
+  {
+    "topic": "Đánh giá mô hình (Metrics)",
+    "id": 6,
+    "question": "Trong bài toán phân loại (Classification), các chỉ số đánh giá mô hình được sử dụng phổ biến là gì?",
+    "options": {
+      "A": "Số vòng lặp trong thuật toán.",
+      "B": "Số lượng dữ liệu thu thập được.",
+      "C": "Độ chính xác (Accuracy), Precision, Recall và F1-Score.",
+      "D": "Tốc độ thu thập dữ liệu."
+    },
+    "answer": "C"
+  },
+  {
+    "topic": "Matplotlib – Vẽ biểu đồ cơ bản",
+    "id": 7,
+    "question": "Khi sử dụng phương thức vẽ biểu đồ của thư viện Pandas (DataFrame df), cú pháp nào dưới đây thiết lập chính xác các thuộc tính: xoay nhãn trục x một góc 45°, màu cột là xanh (blue) và chiều rộng cột là 0.8?",
+    "options": {
+      "A": "df.plot.bar(color='blue', rot=45, width=0.8)",
+      "B": "df.plot.bar(c='b', rotation=0.8, width=45)",
+      "C": "df.bar(color=45, rot='blue', width=0.8)",
+      "D": "df.plot(kind='bar', rotate=45, w=0.8, color='b')"
+    },
+    "answer": "A"
+  },
+  {
+    "topic": "Trực quan hóa Dữ liệu – Lý thuyết & Lựa chọn biểu đồ",
+    "id": 8,
+    "question": "Một doanh nghiệp sản xuất muốn phát hiện và theo dõi tỷ lệ sản phẩm lỗi dựa trên hai yếu tố phân loại cùng lúc là Máy móc và Ca làm việc. Để xem xét mối quan hệ hai chiều và nhanh chóng phát hiện các tổ hợp máy-ca có tỷ lệ lỗi cao bất thường, loại biểu đồ nào là phù hợp và hiệu quả nhất?",
+    "options": {
+      "A": "Pie chart.",
+      "B": "Scatter plot.",
+      "C": "Bar chart.",
+      "D": "Heatmap."
+    },
+    "answer": "D"
+  },
+  {
+    "topic": "NumPy – Mảng & Phép toán",
+    "id": 9,
+    "question": "Trong ngôn ngữ Python, phương thức nào được dùng để tính độ lệch chuẩn (standard deviation) của các phần tử trong mảng?",
+    "options": {
+      "A": "median()",
+      "B": "std()",
+      "C": "var()",
+      "D": "mean()"
+    },
+    "answer": "B"
+  },
+  {
+    "topic": "Pandas – Đọc & Ghi File (CSV, Excel, JSON)",
+    "id": 10,
+    "question": "Làm thế nào để ghi df1 và df2 (các DataFrame khác nhau) vào các sheet khác nhau trong cùng 1 file Excel?",
+    "options": {
+      "A": "Dùng ExcelWriter rồi df1.to_excel(writer, \"Sheet1\"), df2.to_excel(writer, \"Sheet2\") và writer.close()",
+      "B": "Ghi df1, còn df2 copy bằng tay, và writer.close()",
+      "C": "Không thể ghi hai sheet bằng Pandas",
+      "D": "Ghi df1.to_excel, rồi df2.to_excel cùng tên file (ghi đè)"
+    },
+    "answer": "A"
+  },
+  {
+    "topic": "Thu thập & Làm sạch Dữ liệu",
+    "id": 11,
+    "question": "Sau khi thực hiện yêu cầu truy vấn dữ liệu bằng lệnh response = requests.get(url), phương pháp nào đơn giản và trực tiếp nhất để xác nhận rằng yêu cầu của bạn đã được máy chủ xử lý thành công?",
+    "options": {
+      "A": "response.ok == False",
+      "B": "response.status_code == 404",
+      "C": "response.status_code == 200",
+      "D": "len(response.json()) > 0"
+    },
+    "answer": "C"
+  },
+  {
+    "topic": "Tiền xử lý Dữ liệu (Xử lý thiếu, Outlier, Chuẩn hóa, Mã hóa)",
+    "id": 12,
+    "question": "Tại sao không nên điền giá trị thiếu bằng Mean khi dữ liệu có Outliers?",
+    "options": {
+      "A": "Vì Mean sẽ bị kéo lệch bởi outlier",
+      "B": "Vì Mean quá nhỏ",
+      "C": "Vì Mean không tính được",
+      "D": "Vì Median tốt hơn trong mọi trường hợp"
+    },
+    "answer": "A"
+  },
+  {
+    "topic": "Matplotlib – Vẽ biểu đồ cơ bản",
+    "id": 13,
+    "question": "Trong thư viện Matplotlib, câu lệnh nào dưới đây khởi tạo chính xác một lưới biểu đồ con (subplots) với cấu trúc gồm 2 hàng và 3 cột?",
+    "options": {
+      "A": "plt.subplot(2, 3)",
+      "B": "plt.subplot(2, 3, 6)",
+      "C": "plt.subplots(3, 2)",
+      "D": "plt.subplots(2, 3)"
+    },
+    "answer": "D"
+  },
+  {
+    "topic": "Pandas – Pivot, Melt, Stack/Unstack",
+    "id": 14,
+    "question": "Khi phân tích dữ liệu sử dụng thư viện pandas, đặc điểm của dữ liệu dạng \"long format\" là gì?",
+    "options": {
+      "A": "Chỉ dùng cho trình bày báo cáo.",
+      "B": "Mỗi thuộc tính của dữ liệu nằm ở một cột riêng.",
+      "C": "Tên biến và giá trị của biến được tổ chức thành các cặp cột (Variable - Value) trải dài trên nhiều dòng.",
+      "D": "Dữ liệu có ít dòng, nhiều cột."
+    },
+    "answer": "C"
+  },
+  {
+    "topic": "Python – Code Tracing",
+    "id": 15,
+    "question": "Kết quả của đoạn mã sau là gì?\nx = [1, 2, 3]\nprint(2 in x)",
+    "options": {
+      "A": "Không xác định",
+      "B": "False",
+      "C": "Lỗi",
+      "D": "True"
+    },
+    "answer": "D"
+  },
+  {
+    "topic": "Pandas – Đọc & Ghi File (CSV, Excel, JSON)",
+    "id": 16,
+    "question": "Cho dữ liệu JSON có dạng sau: {\"meta\": {...}, \"data\": [{\"id\": 1, ...}, {\"id\": 2, ...}]}. Cách nào để lấy DataFrame từ phần \"data\", không phụ thuộc vào phần \"meta\"?",
+    "options": {
+      "A": "df = pd.read_json(json_str)",
+      "B": "df = pd.read_csv(\"data\")",
+      "C": "df = pd.read_html(\"data\")",
+      "D": "obj = json.loads(json_str)\ndf = pd.DataFrame(obj[\"data\"])"
+    },
+    "answer": "D"
+  },
+  {
+    "topic": "Thu thập & Làm sạch Dữ liệu",
+    "id": 17,
+    "question": "Thiên kiến xác nhận (Confirmation Bias) ảnh hưởng tiêu cực như thế nào đến quá trình ra quyết định?",
+    "options": {
+      "A": "Tăng cường khả năng phản biện khách quan.",
+      "B": "Giúp quyết định được đưa ra nhanh hơn nhưng chính xác hơn.",
+      "C": "Khiến người ra quyết định chỉ tìm kiếm thông tin ủng hộ quan điểm sẵn có và phớt lờ dữ liệu trái chiều.",
+      "D": "Làm giảm tốc độ xử lý của máy tính."
+    },
+    "answer": "C"
+  },
+  {
+    "topic": "Python – Code Tracing",
+    "id": 18,
+    "question": "Kết quả của đoạn mã sau là gì?\ndef func():\n    return 1, 2, 3\n\nx = func()\nprint(type(x))",
+    "options": {
+      "A": "<class 'int'>",
+      "B": "<class 'list'>",
+      "C": "<class 'set'>",
+      "D": "<class 'tuple'>"
+    },
+    "answer": "D"
+  },
+  {
+    "topic": "Tổng quan KHDL & Vai trò nghề nghiệp",
+    "id": 19,
+    "question": "Bước đầu tiên và quan trọng nhất trong chu trình khai thác dữ liệu là gì?",
+    "options": {
+      "A": "Vẽ biểu đồ trực quan hóa.",
+      "B": "Hiểu nghiệp vụ và xác định bài toán.",
+      "C": "Viết mã nguồn cho mô hình.",
+      "D": "Mua phần mềm xử lý dữ liệu."
+    },
+    "answer": "B"
+  },
+  {
+    "topic": "Python – Code Tracing",
+    "id": 20,
+    "question": "Kết quả của biểu thức sau là gì?\n2 ** 3 * 3",
+    "options": {
+      "A": "18",
+      "B": "24",
+      "C": "8",
+      "D": "512"
+    },
+    "answer": "B"
+  },
+  {
+    "topic": "Pandas – Pivot, Melt, Stack/Unstack",
+    "id": 21,
+    "question": "Phương thức unstack trong thư viện Pandas được sử dụng để thực hiện thao tác gì trên dữ liệu của một DataFrame?",
+    "options": {
+      "A": "Gộp nhóm.",
+      "B": "Chuyển hàng thành cột.",
+      "C": "Nối chuỗi.",
+      "D": "Chuyển cột thành hàng."
+    },
+    "answer": "B"
+  },
+  {
+    "topic": "Trực quan hóa Dữ liệu – Lý thuyết & Lựa chọn biểu đồ",
+    "id": 22,
+    "question": "Bạn đang thiết kế một biểu đồ cột (Bar chart) để so sánh hiệu suất giữa hai nhóm, với sự khác biệt thực tế chỉ là 5% (ví dụ: 95% so với 100%). Để làm cho sự khác biệt này trông ấn tượng và lớn hơn trong mắt người xem, bạn quyết định cắt trục Y (Truncated Y-axis), bắt đầu từ giá trị 90% thay vì 0%. Hành động này đã vi phạm nguyên tắc thiết kế trực quan hóa nào?",
+    "options": {
+      "A": "Trung thực (Truthful).",
+      "B": "Khả dụng (Usability).",
+      "C": "Có mục tiêu (Goal-oriented).",
+      "D": "Rõ ràng (Clarity)."
+    },
+    "answer": "A"
+  },
+  {
+    "topic": "Python – Code Tracing",
+    "id": 23,
+    "question": "Kết quả của đoạn mã sau là gì?\ncount = 0\nwhile count < 5:\n    count += 2\nprint(count)",
+    "options": {
+      "A": "4",
+      "B": "5",
+      "C": "7",
+      "D": "6"
+    },
+    "answer": "D"
+  },
+  {
+    "topic": "Pandas – Indexing, loc/iloc",
+    "id": 24,
+    "question": "Trong Python, thuộc tính nào dùng để truy xuất hàng của DataFrame theo tên (nhãn)?",
+    "options": {
+      "A": "row[]",
+      "B": "iloc[]",
+      "C": "ix[]",
+      "D": "loc[]"
+    },
+    "answer": "D"
+  },
+  {
+    "topic": "Pandas – DataFrame: Tạo, Xem, Thống kê",
+    "id": 25,
+    "question": "Phương thức nào viết hoa chữ cái đầu mỗi từ?",
+    "options": {
+      "A": ".str.title()",
+      "B": ".str.proper()",
+      "C": ".str.titlecase()",
+      "D": ".str.capitalize()"
+    },
+    "answer": "A"
+  },
+  {
+    "topic": "Pandas – Chỉ mục phân cấp (Hierarchical Index)",
+    "id": 26,
+    "question": "Trong thư viện pandas (Python), hàm set_index() thường được dùng để làm gì?",
+    "options": {
+      "A": "Xóa index hiện tại",
+      "B": "Thiết lập một hoặc nhiều cột làm index cho DataFrame",
+      "C": "Gộp các cột dữ liệu",
+      "D": "Chuyển MultiIndex thành bảng rộng"
+    },
+    "answer": "B"
+  },
+  {
+    "topic": "NumPy – Mảng & Phép toán",
+    "id": 27,
+    "question": "Ưu điểm lớn nhất của vector hóa (vectorization) trong thư viện Numpy của Python là gì?",
+    "options": {
+      "A": "Tự động tối ưu GPU",
+      "B": "Chạy nhanh hơn đáng kể",
+      "C": "Mã ngắn hơn",
+      "D": "Ít lỗi hơn"
+    },
+    "answer": "B"
+  },
+  {
+    "topic": "Trực quan hóa Dữ liệu – Lý thuyết & Lựa chọn biểu đồ",
+    "id": 28,
+    "question": "Khi trực quan hoá dữ liệu phân loại (categorical), lựa chọn bảng màu nào là phù hợp nhất?",
+    "options": {
+      "A": "Thang màu chuyển dần từ nhạt sang đậm",
+      "B": "Bảng màu phân loại với các màu khác biệt rõ ràng, không hàm ý thứ tự",
+      "C": "Một màu duy nhất với nhiều mức độ trong suốt",
+      "D": "Thang màu đối xứng quanh một giá trị trung tâm"
+    },
+    "answer": "B"
+  },
+  {
+    "topic": "Pandas – Đọc & Ghi File (CSV, Excel, JSON)",
+    "id": 29,
+    "question": "Khi làm việc với thư viện requests, nếu máy chủ phản hồi dữ liệu ở định dạng JSON, phương thức chuẩn xác và tiện lợi nhất để giải mã nội dung đó trực tiếp thành một đối tượng Python (như dict hoặc list) là gì?",
+    "options": {
+      "A": "data = json.loads(response.status_code)",
+      "B": "data = response.text",
+      "C": "data = pd.read_json(response)",
+      "D": "data = response.json()"
+    },
+    "answer": "D"
+  },
+  {
+    "topic": "NumPy – Mảng & Phép toán",
+    "id": 30,
+    "question": "Để tính tổng của mỗi cột trong một mảng 2 chiều arr, bạn sẽ sử dụng cú pháp nào?",
+    "options": {
+      "A": "arr.sum()",
+      "B": "np.sum(arr)",
+      "C": "arr.sum(axis=0)",
+      "D": "arr.sum(axis=1)"
+    },
+    "answer": "C"
+  },
+  {
+    "topic": "Tiền xử lý Dữ liệu (Xử lý thiếu, Outlier, Chuẩn hóa, Mã hóa)",
+    "id": 31,
+    "question": "Trong dự án định giá bất động sản, dữ liệu có nhiều căn biệt thự giá cực cao (outliers) so với mặt bằng chung. Để chuẩn hóa cột \"Giá nhà\" mà không muốn các outliers này làm co cụm phần lớn dữ liệu còn lại, bạn nên dùng công cụ nào?",
+    "options": {
+      "A": "MinMaxScaler",
+      "B": "RobustScaler",
+      "C": "Label Encoder",
+      "D": "Standard Scaler"
+    },
+    "answer": "B"
+  },
+  {
+    "topic": "Tiền xử lý Dữ liệu (Xử lý thiếu, Outlier, Chuẩn hóa, Mã hóa)",
+    "id": 32,
+    "question": "Kỹ thuật điền giá trị thiếu bằng KNN Imputer dựa trên:",
+    "options": {
+      "A": "Sự tương đồng giữa các mẫu",
+      "B": "Giá trị ngẫu nhiên",
+      "C": "Giá trị trung bình",
+      "D": "Giá trị cuối cùng"
+    },
+    "answer": "A"
+  },
+  {
+    "topic": "Pandas – Indexing, loc/iloc",
+    "id": 33,
+    "question": "Trong Python, để lọc các dòng trong DataFrame df có giá trị cột \"A\" > 5, ta sử dụng câu lệnh nào?",
+    "options": {
+      "A": "df[\"A\"] > 5",
+      "B": "df.loc[df[\"A\"] > 5]",
+      "C": "df.extract(\"A\" > 5)",
+      "D": "df.get(\"A\") > 5"
+    },
+    "answer": "B"
+  },
+  {
+    "topic": "NumPy – Mảng & Phép toán",
+    "id": 34,
+    "question": "Hãy cho biết kết quả của đoạn code sau:\nimport numpy as np\na = np.array([10, 20, 30, 40, 50])\nindices = [0, 2, 4]\nprint(a[indices])",
+    "options": {
+      "A": "Lỗi",
+      "B": "[10 30 50]",
+      "C": "[10 20 30 40 50]",
+      "D": "[0 2 4]"
+    },
+    "answer": "B"
+  },
+  {
+    "topic": "Trực quan hóa Dữ liệu – Lý thuyết & Lựa chọn biểu đồ",
+    "id": 35,
+    "question": "Yếu tố nào sau đây ảnh hưởng trực tiếp nhất đến khả năng đọc và diễn giải histogram?",
+    "options": {
+      "A": "Độ rộng bin (bin width) được lựa chọn",
+      "B": "Vị trí đặt chú giải (legend)",
+      "C": "Màu sắc của các cột",
+      "D": "Thứ tự sắp xếp các cột"
+    },
+    "answer": "A"
+  },
+  {
+    "topic": "Tiền xử lý Dữ liệu (Xử lý thiếu, Outlier, Chuẩn hóa, Mã hóa)",
+    "id": 36,
+    "question": "Phát biểu nào đúng về RobustScaler?",
+    "options": {
+      "A": "Ít bị ảnh hưởng bởi outlier",
+      "B": "Nhạy cảm với outlier",
+      "C": "Giống hệt StandardScaler",
+      "D": "Đưa dữ liệu về [0, 1]"
+    },
+    "answer": "A"
+  },
+  {
+    "topic": "Pandas – Đọc & Ghi File (CSV, Excel, JSON)",
+    "id": 37,
+    "question": "Bạn cần đọc file data.csv có 1 dòng tiêu đề, 2 dòng mô tả, sau đó mới đến dữ liệu. Cách nào để bỏ qua 2 dòng mô tả nhưng vẫn giữ tiêu đề?",
+    "options": {
+      "A": "pd.read_csv(\"data.csv\", header=None, skiprows=[1,2,3])",
+      "B": "pd.read_csv(\"data.csv\", skiprows=[1,2])",
+      "C": "pd.read_csv(\"data.csv\", header=None, skiprows=[0,1])",
+      "D": "pd.read_csv(\"data.csv\", skiprows=[0,1,2])"
+    },
+    "answer": "B"
+  },
+  {
+    "topic": "Pandas – Đọc & Ghi File (CSV, Excel, JSON)",
+    "id": 38,
+    "question": "File \"data.csv\" lưu dữ liệu bắt đầu từ dòng đầu tiên (không có tiêu đề cột). Câu lệnh hợp lý để đọc file và đặt tên cột là [\"id\", \"name\", \"score\"] là gì?",
+    "options": {
+      "A": "df = pd.read_csv(\"data.csv\", index_col=[\"id\", \"name\", \"score\"])",
+      "B": "df = pd.read_csv(\"data.csv\", header=None, names=[\"id\", \"name\", \"score\"])",
+      "C": "df = pd.read_table(\"data.csv\", names=None)",
+      "D": "df = pd.read_csv(\"data.csv\", header=0, names=[\"id\", \"name\", \"score\"], index_col=[\"id\", \"name\", \"score\"])"
+    },
+    "answer": "B"
+  },
+  {
+    "topic": "Tổng quan KHDL & Vai trò nghề nghiệp",
+    "id": 39,
+    "question": "DataOps Engineer có nhiệm vụ chính là gì?",
+    "options": {
+      "A": "Xây dựng mô hình học máy",
+      "B": "Chỉ viết câu lệnh SQL",
+      "C": "Chỉ làm dashboard",
+      "D": "Tự động hóa và tối ưu quy trình triển khai dữ liệu"
+    },
+    "answer": "D"
+  },
+  {
+    "topic": "Pandas – Chỉ mục phân cấp (Hierarchical Index)",
+    "id": 40,
+    "question": "Trong thư viện pandas (Python), thuộc tính hàm index.levels dùng để làm gì?",
+    "options": {
+      "A": "Kiểm tra kiểu dữ liệu.",
+      "B": "Đếm số dòng.",
+      "C": "Xác định số cấp của chỉ số.",
+      "D": "Đếm số cột."
+    },
+    "answer": "C"
+  }
+]

@@ -65,8 +65,12 @@ const shuffleQuestionOptions = (question: Question): Question => {
 };
 
 export default function Quiz({ chapter, onBack }: Props) {
-  const isExamMode = chapter.chapter === 999;
+  const isAutoExamMode = chapter.chapter === 999;
+  const isMockExamMode = chapter.chapter === 1000;
+  const isExamMode = isAutoExamMode || isMockExamMode;
   const isReviewMode = chapter.chapter === 998;
+  const [mockExamIndex, setMockExamIndex] = useState(0);
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
   // The queue of questions to answer
   const [queue, setQueue] = useState<Question[]>([]);
@@ -184,6 +188,8 @@ export default function Quiz({ chapter, onBack }: Props) {
     setQuestionTimeSpent({});
     setCurrentQuestionStartTime(Date.now());
     setCurrentQuestionTimer(0);
+    setMockExamIndex(0);
+    setIsSubmitted(false);
   }, [chapter]);
 
   // Timer Effect
@@ -200,17 +206,21 @@ export default function Quiz({ chapter, onBack }: Props) {
           endAudioRef.current.play().catch(e => console.error("Audio play error", e));
         }
         
-        setExamWrongQuestions(prev => {
-          const newWrongs = [...prev];
-          queue.forEach(q => {
-            if (!newWrongs.find(existing => existing.id === q.id)) {
-              newWrongs.push(q);
-            }
+        if (isMockExamMode) {
+          setIsSubmitted(true);
+        } else {
+          setExamWrongQuestions(prev => {
+            const newWrongs = [...prev];
+            queue.forEach(q => {
+              if (!newWrongs.find(existing => existing.id === q.id)) {
+                newWrongs.push(q);
+              }
+            });
+            return newWrongs;
           });
-          return newWrongs;
-        });
-        setQueue([]);
-        setCurrentQuestion(null);
+          setQueue([]);
+          setCurrentQuestion(null);
+        }
       }
     }
   }, [isExamMode, timeLeft, queue.length, currentQuestion, isMuted, volume]);
@@ -232,12 +242,40 @@ export default function Quiz({ chapter, onBack }: Props) {
 
   // Calculate Time Spent when finished
   useEffect(() => {
-    if (!currentQuestion && queue.length === 0 && timeSpent === 0 && totalQuestions > 0) {
+    if (((!currentQuestion && queue.length === 0) || (isMockExamMode && isSubmitted)) && timeSpent === 0 && totalQuestions > 0) {
       setTimeSpent(Math.floor((Date.now() - startTime) / 1000));
     }
-  }, [currentQuestion, queue.length, timeSpent, startTime, totalQuestions]);
+  }, [currentQuestion, queue.length, timeSpent, startTime, totalQuestions, isMockExamMode, isSubmitted]);
+
+  // Handle mock exam submission wrong questions
+  useEffect(() => {
+    if (isMockExamMode && isSubmitted) {
+      const wrong = [];
+      let correct = 0;
+      queue.forEach(q => {
+        const ans = examAnswers[q.id];
+        if (!ans || ans.toUpperCase() !== q.correct_answer?.trim().toUpperCase()) {
+          wrong.push(q);
+        } else {
+          correct++;
+        }
+      });
+      setExamWrongQuestions(wrong);
+      setMasteredCount(correct);
+    }
+  }, [isMockExamMode, isSubmitted, queue, examAnswers]);
 
   const handleNext = (isAnswerCorrect: boolean) => {
+    if (isMockExamMode) {
+      if (mockExamIndex < queue.length - 1) {
+        setMockExamIndex(prev => prev + 1);
+        setCurrentQuestion(queue[mockExamIndex + 1]);
+        setSelectedOption(examAnswers[queue[mockExamIndex + 1].id] || null);
+        setIsCorrect(null);
+      }
+      return;
+    }
+
     setQueue((prevQueue) => {
       let newQueue = [...prevQueue];
       
@@ -276,7 +314,25 @@ export default function Quiz({ chapter, onBack }: Props) {
   };
 
   const handleSelectOption = (key: string) => {
-    if (selectedOption || !currentQuestion) return; // Prevent multiple submittions
+    if (!currentQuestion) return;
+    
+    if (isMockExamMode) {
+      if (selectedOption === key) {
+        // Toggle off
+        setSelectedOption(null);
+        setExamAnswers(prev => {
+          const next = { ...prev };
+          delete next[currentQuestion.id];
+          return next;
+        });
+      } else {
+        setSelectedOption(key);
+        setExamAnswers(prev => ({ ...prev, [currentQuestion.id]: key }));
+      }
+      return;
+    }
+
+    if (selectedOption) return; // Prevent multiple submittions
 
     setSelectedOption(key);
     
@@ -366,12 +422,9 @@ export default function Quiz({ chapter, onBack }: Props) {
       });
     }
 
-    if (isExamMode) {
+    if (isAutoExamMode) {
       setExamAnswers(prev => ({ ...prev, [currentQuestion.id]: key }));
-      // Auto advance quickly in exam mode
-      setTimeout(() => {
-        handleNext(isAnswerCorrect);
-      }, 400);
+      setTimeout(() => handleNext(isAnswerCorrect), 400);
       return;
     }
 
@@ -383,15 +436,11 @@ export default function Quiz({ chapter, onBack }: Props) {
        return prev;
     });
 
-    // Wait a brief moment to show feedback before proceeding
-    const delay = isAnswerCorrect ? 1000 : 2500; // longer delay if wrong to see the correct answer
-
-    // Only auto-advance if there is no explanation to read
-    if (!currentQuestion.explanation) {
-      setTimeout(() => {
-        handleNext(isAnswerCorrect);
-      }, delay);
-    }
+    // Auto advance with delay to ponder
+    const delay = currentQuestion.explanation ? 6000 : (isAnswerCorrect ? 1500 : 3500); 
+    setTimeout(() => {
+      handleNext(isAnswerCorrect);
+    }, delay);
   };
 
   // Keyboard Navigation
@@ -414,6 +463,17 @@ export default function Quiz({ chapter, onBack }: Props) {
 
         if (keyToSelect && optionKeys.includes(keyToSelect)) {
           handleSelectOption(keyToSelect);
+        }
+      } else if (isMockExamMode) {
+        if (e.key === 'ArrowRight') {
+           handleNext(false);
+        } else if (e.key === 'ArrowLeft') {
+           if (mockExamIndex > 0) {
+             setMockExamIndex(prev => prev - 1);
+             setCurrentQuestion(queue[mockExamIndex - 1]);
+             setSelectedOption(examAnswers[queue[mockExamIndex - 1].id] || null);
+             setIsCorrect(null);
+           }
         }
       } else if (selectedOption && !isExamMode && isCorrect !== null) {
         if (e.key === 'Enter' || e.key === ' ') {
@@ -452,7 +512,7 @@ export default function Quiz({ chapter, onBack }: Props) {
     }
 
   // If the user has completed all questions
-  if (!currentQuestion && queue.length === 0) {
+  if ((!currentQuestion && queue.length === 0) || (isMockExamMode && isSubmitted)) {
     const isPerfect = examWrongQuestions.length === 0 && Object.keys(examAnswers).length === totalQuestions;
     
     // Calculate correct score by checking answers
@@ -542,6 +602,8 @@ export default function Quiz({ chapter, onBack }: Props) {
                 setStreak(0);
                 setMaxStreak(0);
                 setStreakBroken(false);
+                setMockExamIndex(0);
+                setIsSubmitted(false);
               }}
               className="btn-primary w-full sm:w-auto px-8 py-4 text-base flex items-center justify-center gap-3"
             >
@@ -564,22 +626,28 @@ export default function Quiz({ chapter, onBack }: Props) {
                   </p>
                   
                   <div className="space-y-4 mt-4 p-4 border-l-4 border-ink bg-[#F0F0F0]">
-                    <p className="font-bold text-base sm:text-lg">
-                      <span className="text-primary mr-3 inline-flex items-center">
-                        <X className="w-5 h-5 mr-1 inline" strokeWidth={3}/>
-                        BẠN CHỌN:
-                      </span>
-                      <span className="line-through"><ContentRenderer content={examAnswers[q.id] || "BỎ TRỐNG"} className="inline" /></span>
-                    </p>
-                    <p className="font-bold text-base sm:text-lg">
-                      <span className="text-[#0C9E59] mr-3 inline-flex items-center">
-                        <Check className="w-5 h-5 mr-1 inline" strokeWidth={3}/>
-                        ĐÁP ÁN ĐÚNG:
-                      </span>
-                      <ContentRenderer content={q.correct_answer} className="inline" />
-                    </p>
+                    <div className="flex flex-col gap-2 mb-2">
+                      {Object.entries(q.options).map(([key, text]) => {
+                        const isSelected = examAnswers[q.id] === key;
+                        const isCorrect = q.correct_answer === key;
+                        
+                        let optionClass = "flex items-start gap-3 p-3 border-2 border-transparent text-sm sm:text-base ";
+                        if (isCorrect) optionClass += "bg-semantic-success/10 border-semantic-success ";
+                        else if (isSelected && !isCorrect) optionClass += "bg-semantic-error/10 border-semantic-error line-through ";
+                        else optionClass += "bg-white border-ink/20 opacity-70 ";
+                        
+                        return (
+                          <div key={key} className={optionClass}>
+                            <span className="font-bold shrink-0 w-6">{key}.</span>
+                            <span className="flex-1">{String(text)}</span>
+                            {isCorrect && <Check className="w-5 h-5 text-semantic-success inline shrink-0" strokeWidth={3}/>}
+                            {isSelected && !isCorrect && <X className="w-5 h-5 text-semantic-error inline shrink-0" strokeWidth={3}/>}
+                          </div>
+                        )
+                      })}
+                    </div>
                     {q.explanation && (
-                      <div className="mt-6 bg-white p-4 border-4 border-ink text-[15px] sm:text-base font-medium">
+                      <div className="mt-4 bg-white p-4 border-4 border-ink text-[15px] sm:text-base font-medium">
                         <p className="font-black uppercase tracking-wider mb-2 text-sm">GIẢI THÍCH:</p>
                         <ContentRenderer content={q.explanation} />
                       </div>
@@ -629,9 +697,60 @@ export default function Quiz({ chapter, onBack }: Props) {
   }
 
   return (
-    <div ref={containerRef} className="max-w-3xl mx-auto w-full px-4 sm:px-0">
-        {currentQuestion && (
+    <div ref={containerRef} className={`${isMockExamMode && !isSubmitted ? "max-w-6xl flex flex-col md:flex-row md:items-start gap-8" : "max-w-3xl flex flex-col"} mx-auto w-full px-4 sm:px-0`}>
+        {currentQuestion && !isSubmitted && (
           <>
+            {isMockExamMode && (
+              <div className="w-full md:w-80 shrink-0 bg-white p-6 border-4 border-ink md:sticky md:top-6 order-2 md:order-1 mt-6 md:mt-0 xl:max-h-[calc(100vh-6rem)] flex flex-col xl:overflow-hidden relative shadow-[8px_8px_0_0_#121212]">
+                <div className="flex justify-between items-center mb-6 border-b-4 border-ink pb-4">
+                  <p className="font-bold text-ink uppercase text-xl">Danh sách<br/>câu hỏi</p>
+                  <button 
+                    onClick={() => setIsSubmitted(true)}
+                    className="px-4 py-3 bg-primary font-bold text-white border-2 border-ink hover:bg-opacity-90 shadow-[4px_4px_0px_#121212] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_#121212] transition-all"
+                  >
+                    NỘP BÀI
+                  </button>
+                </div>
+                <div className="grid grid-cols-5 gap-3 pr-2 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-primary scrollbar-track-transparent pb-4">
+                  {queue.map((q, idx) => {
+                    const ans = examAnswers[q.id];
+                    const isCurrent = idx === mockExamIndex;
+                    return (
+                      <button
+                        key={q.id}
+                        onClick={() => {
+                          setMockExamIndex(idx);
+                          setCurrentQuestion(q);
+                          setSelectedOption(examAnswers[q.id] || null);
+                          setIsCorrect(null);
+                        }}
+                        className={`aspect-square border-2 border-ink font-bold flex items-center justify-center transition-all
+                          ${isCurrent ? 'bg-primary text-white border-[3px] scale-110 shadow-[2px_2px_0px_#121212] relative z-10 wobbly-border' : 
+                            ans ? 'bg-primary-yellow text-ink shadow-[2px_2px_0px_#121212]' : 'bg-surface hover:bg-surface-soft'}
+                        `}
+                      >
+                        {idx + 1}
+                      </button>
+                    )
+                  })}
+                </div>
+                <div className="mt-6 pt-4 border-t-4 border-ink text-sm font-bold flex flex-col gap-2">
+                   <div className="flex items-center gap-2">
+                     <div className="w-4 h-4 bg-primary border-2 border-ink"></div>
+                     <span>Đang làm</span>
+                   </div>
+                   <div className="flex items-center gap-2">
+                     <div className="w-4 h-4 bg-primary-yellow border-2 border-ink"></div>
+                     <span>Đã chọn</span>
+                   </div>
+                   <div className="flex items-center gap-2">
+                     <div className="w-4 h-4 bg-surface border-2 border-ink"></div>
+                     <span>Chưa làm</span>
+                   </div>
+                </div>
+              </div>
+            )}
+            <div className={`flex-1 w-full max-w-3xl flex flex-col min-w-0 ${isMockExamMode ? 'order-1 md:order-2' : ''}`}>
             {/* Question Meta */}
             <div className="flex items-center justify-between mb-8 pt-2">
               <button onClick={onBack} className="flex items-center text-ink hover:text-primary transition-colors group z-20 relative flex-shrink-0">
@@ -800,10 +919,10 @@ export default function Quiz({ chapter, onBack }: Props) {
                     key={key} 
                     className={buttonClass}
                     onClick={() => handleSelectOption(key)}
-                    disabled={!!selectedOption}
+                    disabled={isMockExamMode ? false : !!selectedOption}
                   >
                     <span className={circleClass}>{key}</span>
-                    <span className={textClass}><ContentRenderer content={String(text)} className="inline" /></span>
+                    <span className={textClass}>{String(text)}</span>
                     
                     {/* Result Icons - Only in Normal Mode */}
                     {!isExamMode && selectedOption && isCorrectAnswerOption && (
@@ -903,18 +1022,15 @@ export default function Quiz({ chapter, onBack }: Props) {
                   </>
                 )}
               </div>
-              {currentQuestion.explanation ? (
-                <button
-                  onClick={() => handleNext(isCorrect!)}
-                  className="btn-primary px-8 py-4 ml-4 shrink-0 text-base"
-                >
-                  Câu tiếp
-                </button>
-              ) : (
-                <div className="w-10 h-10 rounded-full border-4 border-ink/20 border-t-ink animate-spin"></div>
-              )}
+              <button
+                onClick={() => handleNext(isCorrect!)}
+                className="btn-primary px-8 py-4 ml-4 shrink-0 text-base"
+              >
+                Câu tiếp
+              </button>
             </div>
           )}
+          </div>
         </>
       )}
     </div>

@@ -184,7 +184,24 @@ const CodeBlock: React.FC<{ lang: string; code: string }> = ({ lang, code }) => 
 
 export const ContentRenderer: React.FC<{ content?: string; className?: string }> = ({ content, className = '' }) => {
   if (!content) return null;
-  const blocks = parseFenced(content);
+  
+  let processedContent = content;
+  
+  // Custom heuristic to auto-format un-fenced python code from question banks
+  if (processedContent.includes('\n') && !processedContent.includes('```')) {
+    const firstNewline = processedContent.indexOf('\n');
+    const firstLine = processedContent.substring(0, firstNewline).trim();
+    const rest = processedContent.substring(firstNewline + 1);
+    
+    const isPrompt = /(:|\?)$/.test(firstLine) || /(đoạn mã|đoạn code|câu lệnh)/i.test(firstLine);
+    const hasPythonTokens = /(\bimport\b|\bdef\b|\bprint\s*\(|\bpd\.|np\.|plt\.|df\.|sns\.|\[.*for.*in.*\]|[a-zA-Z_][a-zA-Z0-9_]*\s*=(?!=))/.test(rest);
+    
+    if (isPrompt && hasPythonTokens) {
+       processedContent = `${firstLine}\n\`\`\`python\n${rest}\n\`\`\``;
+    }
+  }
+
+  const blocks = parseFenced(processedContent);
   
   return (
     <div className={`whitespace-pre-wrap break-words ${className}`}>

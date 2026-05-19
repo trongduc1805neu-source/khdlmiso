@@ -7,14 +7,21 @@ import React, { useState, useEffect } from 'react';
 import ChapterList from './components/ChapterList';
 import Quiz from './components/Quiz';
 import ExamBuilderModal from './components/ExamBuilderModal';
+import PracticeSelectionModal from './components/PracticeSelectionModal';
 import { Chapter } from './types';
 import questionsData from './data/questions.json';
-import { Info, Dices, Target } from 'lucide-react';
+import { Info, Dices, Target, FileText, X } from 'lucide-react';
+import { generatePracticeExam, generateTopicPractice, generateSpecificExam } from './utils/examGenerator';
 
 export default function App() {
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
   const [isExamModalOpen, setIsExamModalOpen] = useState(false);
+  const [isPracticeModalOpen, setIsPracticeModalOpen] = useState(false);
 
   useEffect(() => {
     // Assert the typing of imported JSON
@@ -34,27 +41,23 @@ export default function App() {
     setSelectedChapter(examChapter);
   };
 
-  const handleReviewWrongQuestions = () => {
-    const stored = localStorage.getItem('anki_wrong_questions');
-    if (stored) {
-      try {
-        const wrongQuestions = JSON.parse(stored);
-        if (wrongQuestions.length > 0) {
-          setSelectedChapter({
-            chapter: 998, // Virtual chapter for wrong questions
-            chapter_title: 'Ôn Lại Câu Sai',
-            questions: wrongQuestions,
-          });
-        } else {
-          alert('Tuyệt vời! Bạn không có câu sai nào cần ôn lại.');
-        }
-      } catch(e) {
-        console.error(e);
-        alert('Có lỗi xảy ra khi tải danh sách câu sai.');
-      }
+  const handleStartPracticeExam = () => {
+    setIsAuthModalOpen(true);
+  };
+
+  const handleGenerateExamAction = (type: 'de1' | 'de2' | 'random') => {
+    let practiceExam;
+    if (type === 'random') {
+      practiceExam = generatePracticeExam();
     } else {
-      alert('Tuyệt vời! Bạn không có câu sai nào cần ôn lại.');
+      practiceExam = generateSpecificExam(type);
     }
+    setSelectedChapter(practiceExam);
+  };
+
+  const handleSelectTopicAction = (topicId: string) => {
+    const topicExam = generateTopicPractice(topicId);
+    setSelectedChapter(topicExam);
   };
 
   return (
@@ -67,6 +70,8 @@ export default function App() {
           </div>
           <span className="heading-bauhaus text-xl md:text-2xl tracking-tighter text-ink mt-1">
             {selectedChapter ? (
+              selectedChapter.chapter === 1000 ? 'LUYỆN ĐỀ CHUẨN' : 
+              selectedChapter.chapter === 2000 ? selectedChapter.chapter_title?.toUpperCase() :
               selectedChapter.chapter === 999 ? 'ĐỀ THI NGẪU NHIÊN' : 
               selectedChapter.chapter === 998 ? 'ÔN LẠI CÂU SAI' : 
               <>
@@ -79,32 +84,34 @@ export default function App() {
       
       <div className="flex-1 flex overflow-hidden">
         {/* Desktop Sidebar */}
-        <aside className="w-80 lg:w-96 border-r-4 border-ink p-6 lg:p-8 flex flex-col shrink-0 hidden md:flex overflow-hidden relative z-10 bg-white">
-          <div className="flex flex-col gap-4 mb-8 shrink-0">
-            <button 
-              onClick={() => setIsExamModalOpen(true)}
-              className="btn-primary w-full py-4 px-4 flex items-center justify-center gap-2"
-            >
-              <Dices strokeWidth={3} className="w-6 h-6" />
-              <span className="text-sm lg:text-base mt-1 tracking-wider uppercase font-bold">TẠO ĐỀ THI LỚN</span>
-            </button>
-            <button 
-              onClick={handleReviewWrongQuestions}
-              className="btn-secondary w-full py-4 px-4 flex items-center justify-center gap-2"
-            >
-              <Target strokeWidth={3} className="w-6 h-6" />
-              <span className="text-sm lg:text-base mt-1 tracking-wider uppercase font-bold">ÔN LẠI CÂU SAI</span>
-            </button>
-          </div>
+        {(!selectedChapter || (selectedChapter.chapter !== 1000 && selectedChapter.chapter !== 2000)) && (
+          <aside className="w-80 lg:w-96 border-r-4 border-ink p-6 lg:p-8 flex flex-col shrink-0 hidden md:flex overflow-hidden relative z-10 bg-white">
+            <div className="flex flex-col gap-4 mb-8 shrink-0">
+              <button 
+                onClick={handleStartPracticeExam}
+                className="btn-primary w-full py-4 px-4 flex items-center justify-center gap-2 !bg-[#3B82F6] !border-4 !border-ink shadow-[4px_4px_0px_#121212] hover:shadow-[2px_2px_0px_#121212] hover:translate-x-[2px] hover:translate-y-[2px]"
+              >
+                <Target strokeWidth={3} className="w-6 h-6 text-white" />
+                <span className="text-sm lg:text-base mt-1 tracking-wider uppercase font-bold text-white">LUYỆN ĐỀ TỔNG HỢP</span>
+              </button>
+              <button 
+                onClick={() => setIsExamModalOpen(true)}
+                className="btn-primary w-full py-4 px-4 flex items-center justify-center gap-2"
+              >
+                <Dices strokeWidth={3} className="w-6 h-6" />
+                <span className="text-sm lg:text-base mt-1 tracking-wider uppercase font-bold">TẠO ĐỀ THI TÙY CHỈNH</span>
+              </button>
+            </div>
 
-          <div className="flex-1 overflow-y-auto pr-2 -mr-2 scrollbar-hide">
-            <ChapterList 
-              chapters={chapters} 
-              onSelectChapter={setSelectedChapter} 
-              selectedChapter={selectedChapter}
-            />
-          </div>
-        </aside>
+            <div className="flex-1 overflow-y-auto pr-2 -mr-2 scrollbar-hide">
+              <ChapterList 
+                chapters={chapters} 
+                onSelectChapter={setSelectedChapter} 
+                selectedChapter={selectedChapter}
+              />
+            </div>
+          </aside>
+        )}
 
         {/* Main Content Area */}
         <main className="flex-1 flex flex-col relative overflow-hidden bg-canvas">
@@ -131,18 +138,18 @@ export default function App() {
                   
                   <div className="flex flex-col gap-4 mb-10 mt-6">
                     <button 
+                      onClick={handleStartPracticeExam}
+                      className="btn-primary w-full py-4 flex items-center justify-center gap-2 !bg-[#3B82F6] !border-4 !border-ink shadow-[4px_4px_0px_#121212] hover:shadow-[2px_2px_0px_#121212] hover:translate-x-[2px] hover:translate-y-[2px]"
+                    >
+                      <Target strokeWidth={3} className="w-6 h-6 text-white" />
+                      <span className="text-base mt-1 tracking-wider uppercase font-bold text-white">LUYỆN ĐỀ TỔNG HỢP</span>
+                    </button>
+                    <button 
                       onClick={() => setIsExamModalOpen(true)}
                       className="btn-primary w-full py-4 flex items-center justify-center gap-2"
                     >
                       <Dices strokeWidth={3} className="w-6 h-6" />
-                      <span className="text-base mt-1 tracking-wider uppercase font-bold">TẠO ĐỀ THI LỚN</span>
-                    </button>
-                    <button 
-                      onClick={handleReviewWrongQuestions}
-                      className="btn-secondary w-full py-4 flex items-center justify-center gap-2"
-                    >
-                      <Target strokeWidth={3} className="w-6 h-6" />
-                      <span className="text-base mt-1 tracking-wider uppercase font-bold">ÔN LẠI CÂU SAI</span>
+                      <span className="text-base mt-1 tracking-wider uppercase font-bold">TẠO ĐỀ TÙY CHỈNH</span>
                     </button>
                   </div>
                   
@@ -184,6 +191,54 @@ export default function App() {
           onStartExam={handleStartExam}
           onClose={() => setIsExamModalOpen(false)}
         />
+      )}
+
+      <PracticeSelectionModal 
+        isOpen={isPracticeModalOpen}
+        onClose={() => setIsPracticeModalOpen(false)}
+        onSelectTopic={handleSelectTopicAction}
+        onGenerateExam={handleGenerateExamAction}
+      />
+
+      {isAuthModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/80 backdrop-blur-sm">
+          <div className="bg-white p-8 border-4 border-ink shadow-[8px_8px_0px_0px_#121212] max-w-md w-full relative animate-in zoom-in-95 duration-200">
+            <button 
+              onClick={() => setIsAuthModalOpen(false)}
+              className="absolute top-4 right-4 text-ink hover:text-primary transition-colors"
+            >
+              <X strokeWidth={3} className="w-6 h-6" />
+            </button>
+            <h1 className="text-2xl font-bold text-ink mb-6 text-center uppercase tracking-tight">Xác thực hệ thống</h1>
+            <p className="text-sm text-charcoal mb-6 text-center">Chức năng Luyện Đề Chuẩn chỉ dành cho thành viên có mã truy cập.</p>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              if (password === '18052006') {
+                setIsAuthModalOpen(false);
+                setIsPracticeModalOpen(true);
+                setPassword('');
+                setError('');
+              } else {
+                setError('Mã truy cập không đúng!');
+              }
+            }} className="flex flex-col gap-4">
+              <div>
+                <label className="block font-bold text-sm mb-2 text-ink">MÃ TRUY CẬP</label>
+                <input 
+                  type="password" 
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full border-2 border-ink p-3 outline-none focus:bg-surface-soft font-mono"
+                  autoFocus
+                />
+              </div>
+              {error && <p className="text-primary font-bold text-sm bg-surface-soft p-2 border-2 border-ink">{error}</p>}
+              <button type="submit" className="btn-primary w-full py-3 mt-2 font-bold uppercase tracking-wider">
+                Xác Nhận
+              </button>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );
